@@ -75,7 +75,7 @@ async def check_existence(
             note="This paper has been retracted.",
         )
 
-    logger.info("[verifier] VERIFIED  title=%r  oa_id=%s", title, oa_id)
+    logger.info("[verifier] VERIFIED  title=%r  oa_id=%s  doi=%s", title, oa_id, doi)
     return VerificationResult(
         title=title,
         status="verified",

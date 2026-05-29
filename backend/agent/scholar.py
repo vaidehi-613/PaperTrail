@@ -160,9 +160,9 @@ async def get_citing_papers(
     url = f"{_OA_BASE}/works"
     params = {
         "filter": f"cites:{oa_work_id}",
-        "sort": "publication_year:desc",
+        "sort": "cited_by_count:desc",  # most influential citing papers first
         "per_page": limit,
-        "select": "id,title,publication_year,authorships,concepts,doi,abstract_inverted_index",
+        "select": "id,title,publication_year,authorships,concepts,doi,abstract_inverted_index,cited_by_count",
     }
     logger.info("[scholar] get_citing_papers  oa_id=%s  url=%s  params=%s",
                 oa_work_id, url, params)
@@ -178,7 +178,11 @@ async def get_citing_papers(
     items = resp.json().get("results", [])
     logger.info("[scholar] citing papers raw count=%d", len(items))
 
-    source_set = {c.lower() for c in source_concepts}
+    # Build a stricter concept filter: top 3 source concepts + NLP-specific terms
+    source_top3 = {c.lower() for c in source_concepts[:3]} if source_concepts else set()
+    nlp_core = {"natural language processing", "linguistics", "computer vision", "speech recognition"}
+    strict_set = source_top3 | nlp_core
+
     results: list[ScholarResult] = []
 
     for item in items:
@@ -189,8 +193,9 @@ async def get_citing_papers(
                           if c.get("level", 99) <= 1]
         paper_set = {c.lower() for c in paper_concepts}
 
-        if paper_set and source_set and not paper_set & source_set:
-            logger.debug("[scholar] DROPPED  title=%r  concepts=%s", item.get("title"), paper_concepts)
+        # Stricter gate: must overlap with top source concepts OR core NLP terms
+        if paper_set and strict_set and not paper_set & strict_set:
+            logger.debug("[scholar] DROPPED (strict)  title=%r  concepts=%s", item.get("title"), paper_concepts)
             continue
 
         doi_full = item.get("doi") or ""

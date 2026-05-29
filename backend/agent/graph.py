@@ -39,6 +39,8 @@ _SYSTEM_TEMPLATE = (
     "• General related-work → scholar_search_tool.\n"
     "• You may call multiple tools if the question warrants it.\n"
     "• Cite paper passages as [Section, p.N].\n"
+    "• When describing citing papers: mention title, authors, and year ONLY.\n"
+    "  NEVER write DOIs, URLs, or 'Read more' links — those appear automatically in the cards below.\n"
     "• NEVER reveal the paper_id UUID."
 )
 
