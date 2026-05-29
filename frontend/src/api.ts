@@ -1,4 +1,4 @@
-import type { Source } from './types'
+import type { ScholarResult, Source } from './types'
 
 export async function uploadPaper(
   file: File,
@@ -13,7 +13,7 @@ export async function uploadPaper(
 export async function sendChat(
   paper_id: string,
   message: string,
-): Promise<{ answer: string; sources: Source[] }> {
+): Promise<{ answer: string; sources: Source[]; scholar_results: ScholarResult[] }> {
   const res = await fetch('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

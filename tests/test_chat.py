@@ -1,11 +1,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from backend.agent.scholar import ScholarResult
 from backend.retrieval.retriever import Source
-
-# ---------------------------------------------------------------------------
-# Helpers — fake OpenAI completion
-# ---------------------------------------------------------------------------
 
 FAKE_ANSWER = "RAG improves factuality according to [Methods, p.2]."
 FAKE_SOURCE = Source(
@@ -19,51 +16,15 @@ FAKE_SOURCE = Source(
 )
 
 
-class _FakeMessage:
-    content = FAKE_ANSWER
-
-
-class _FakeChoice:
-    message = _FakeMessage()
-
-
-class _FakeCompletion:
-    choices = [_FakeChoice()]
-
-
-class _FakeCompletions:
-    async def create(self, **_kwargs):
-        return _FakeCompletion()
-
-
-class _FakeChat:
-    completions = _FakeCompletions()
-
-
-class _FakeOpenAI:
-    chat = _FakeChat()
-
-    def __init__(self, **_kwargs):
-        pass
-
-
-# ---------------------------------------------------------------------------
-# Test
-# ---------------------------------------------------------------------------
-
-
 @pytest.mark.asyncio
 async def test_chat_response_shape(monkeypatch) -> None:
-    """POST /chat returns {answer, sources} without hitting real services."""
+    """POST /chat returns {answer, sources, scholar_results} without hitting real services."""
     from backend.main import app
 
-    async def fake_retrieve(query, paper_id, top_k=5):
-        return [FAKE_SOURCE]
+    async def fake_run_agent(paper_id, question):
+        return FAKE_ANSWER, [FAKE_SOURCE], []
 
-    from backend.main import app  # deferred — avoids module-level network init
-
-    monkeypatch.setattr("backend.routers.chat.retrieve", fake_retrieve)
-    monkeypatch.setattr("backend.routers.chat.AsyncOpenAI", _FakeOpenAI)
+    monkeypatch.setattr("backend.routers.chat.run_agent", fake_run_agent)
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -84,3 +45,4 @@ async def test_chat_response_shape(monkeypatch) -> None:
     assert src["page"] == 2
     assert src["is_table"] is False
     assert src["is_figure"] is False
+    assert data["scholar_results"] == []

@@ -1,17 +1,11 @@
-from openai import AsyncOpenAI
-from pydantic import BaseModel
 from fastapi import APIRouter
+from pydantic import BaseModel
 
-from backend.config import get_settings
-from backend.retrieval.retriever import Source, retrieve
+from backend.agent.graph import run_agent
+from backend.agent.scholar import ScholarResult
+from backend.retrieval.retriever import Source
 
 router = APIRouter()
-
-_SYSTEM_PROMPT = (
-    "You are a research assistant helping a student understand a paper. "
-    "Answer only using the provided excerpts. Cite sources inline as "
-    "[Section, p.N]. If the answer is not in the excerpts, say so clearly."
-)
 
 
 class ChatRequest(BaseModel):
@@ -29,39 +23,27 @@ class SourceOut(BaseModel):
     similarity: float
 
 
+class ScholarResultOut(BaseModel):
+    title: str
+    authors: list[str]
+    year: int | None
+    abstract: str | None
+    doi: str | None
+    url: str | None
+
+
 class ChatResponse(BaseModel):
     answer: str
     sources: list[SourceOut]
-
-
-def _fmt_context(sources: list[Source]) -> str:
-    parts = []
-    for s in sources:
-        loc = f"{s.section or 'Section'}, p.{s.page}" if s.page else (s.section or "")
-        parts.append(f"[{loc}]\n{s.content}")
-    return "\n\n".join(parts)
+    scholar_results: list[ScholarResultOut] = []
 
 
 @router.post("", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
-    sources = await retrieve(req.message, req.paper_id)
+    answer, paper_sources, scholar_results = await run_agent(req.paper_id, req.message)
 
-    settings = get_settings()
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-
-    completion = await client.chat.completions.create(
-        model=settings.llm_model,
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": f"Excerpts:\n{_fmt_context(sources)}\n\nQuestion: {req.message}",
-            },
-        ],
-    )
-
-    answer = completion.choices[0].message.content or ""
     return ChatResponse(
         answer=answer,
-        sources=[SourceOut(**vars(s)) for s in sources],
+        sources=[SourceOut(**vars(s)) for s in paper_sources],
+        scholar_results=[ScholarResultOut(**vars(r)) for r in scholar_results],
     )

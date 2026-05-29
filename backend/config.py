@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     reranker_model: str = "BAAI/bge-reranker-base"
     rerank_candidates: int = 20  # fetch this many from hybrid search, rerank to top_k
 
+    semantic_scholar_api_key: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",")]

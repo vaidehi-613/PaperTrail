@@ -1,4 +1,4 @@
-import type { Message, Source } from '../types'
+import type { Message, ScholarResult, Source } from '../types'
 
 function dedupSources(sources: Source[]): Source[] {
   const seen = new Set<string>()
@@ -33,6 +33,29 @@ function SourceChip({ source }: { source: Source }) {
   )
 }
 
+function ScholarCard({ result }: { result: ScholarResult }) {
+  const authors = result.authors.slice(0, 2).join(', ') +
+    (result.authors.length > 2 ? ' et al.' : '')
+
+  const inner = (
+    <div
+      className="rounded-lg border px-3 py-2 text-xs transition-colors hover:bg-white"
+      style={{ borderColor: '#E5E3DE' }}
+    >
+      <p className="font-medium text-gray-800 line-clamp-1">{result.title}</p>
+      <p className="mt-0.5 text-gray-500">
+        {authors}{result.year ? ` · ${result.year}` : ''}
+      </p>
+    </div>
+  )
+
+  return result.url ? (
+    <a href={result.url} target="_blank" rel="noopener noreferrer" className="block">
+      {inner}
+    </a>
+  ) : inner
+}
+
 type Props = { message: Message }
 
 export function MessageBubble({ message }: Props) {
@@ -56,6 +79,15 @@ export function MessageBubble({ message }: Props) {
           <div className="flex flex-wrap gap-1.5 px-1">
             {dedupSources(message.sources).map((s) => (
               <SourceChip key={s.id} source={s} />
+            ))}
+          </div>
+        )}
+
+        {!isUser && message.scholar_results && message.scholar_results.length > 0 && (
+          <div className="flex w-full flex-col gap-1.5 px-1">
+            <p className="text-xs font-medium text-gray-400">Related papers</p>
+            {message.scholar_results.map((r, i) => (
+              <ScholarCard key={i} result={r} />
             ))}
           </div>
         )}
