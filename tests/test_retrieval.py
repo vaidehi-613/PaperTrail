@@ -73,8 +73,12 @@ async def test_retrieve_calls_hybrid_rpc(monkeypatch) -> None:
     async def fake_get_supabase():
         return fake_sb
 
+    def fake_rerank(query, sources, top_k):
+        return sources[:top_k]
+
     monkeypatch.setattr("backend.retrieval.retriever.AsyncOpenAI", _FakeOpenAI)
     monkeypatch.setattr("backend.retrieval.retriever.get_supabase", fake_get_supabase)
+    monkeypatch.setattr("backend.retrieval.reranker.rerank", fake_rerank)
 
     results = await retrieve("masked language modelling", "paper-xyz")
 

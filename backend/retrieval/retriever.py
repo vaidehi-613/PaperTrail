@@ -31,9 +31,13 @@ async def retrieve(query: str, paper_id: str) -> list[Source]:
             "query_embedding": query_embedding,
             "query_text": query,
             "filter_paper_id": paper_id,
-            "match_count": settings.retrieval_top_k,
+            "match_count": settings.rerank_candidates,
             "rrf_k": settings.rrf_k,
         },
     ).execute()
 
-    return [Source(**row) for row in result.data]
+    candidates = [Source(**row) for row in result.data]
+
+    # Cross-encoder reranker: run synchronously on CPU (lazy model load on first call).
+    from backend.retrieval.reranker import rerank
+    return rerank(query, candidates, top_k=settings.retrieval_top_k)

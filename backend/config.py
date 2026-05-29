@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     retrieval_top_k: int = 5
     rrf_k: int = 60
+    reranker_model: str = "BAAI/bge-reranker-base"
+    rerank_candidates: int = 20  # fetch this many from hybrid search, rerank to top_k
 
     @property
     def cors_origins_list(self) -> list[str]:
