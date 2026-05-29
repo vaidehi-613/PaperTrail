@@ -1,0 +1,55 @@
+import type { Message, Source } from '../types'
+
+function SourceChip({ source }: { source: Source }) {
+  const label =
+    source.section && source.page
+      ? `${source.section}, p.${source.page}`
+      : source.section ?? (source.page ? `p.${source.page}` : 'Source')
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+      style={{ background: 'var(--surface-2)', color: '#555' }}
+      title={source.content}
+    >
+      {source.is_table && (
+        <span className="rounded bg-blue-100 px-1 text-blue-700">table</span>
+      )}
+      {source.is_figure && (
+        <span className="rounded bg-purple-100 px-1 text-purple-700">fig</span>
+      )}
+      {label}
+    </span>
+  )
+}
+
+type Props = { message: Message }
+
+export function MessageBubble({ message }: Props) {
+  const isUser = message.role === 'user'
+
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex max-w-[70%] flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
+        <div
+          className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+          style={
+            isUser
+              ? { background: 'var(--accent)', color: 'white' }
+              : { background: 'var(--surface-2)', color: '#1a1a1a' }
+          }
+        >
+          {message.content}
+        </div>
+
+        {!isUser && message.sources && message.sources.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 px-1">
+            {message.sources.map((s) => (
+              <SourceChip key={s.id} source={s} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
