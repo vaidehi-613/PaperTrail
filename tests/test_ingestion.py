@@ -30,9 +30,13 @@ def test_parser_chunks(sample_pdf_path: Path) -> None:
 # Integration test — requires SUPABASE_URL + OPENAI_API_KEY in environment
 # ---------------------------------------------------------------------------
 
+def _real_key(var: str) -> bool:
+    v = os.getenv(var, "")
+    return bool(v) and "..." not in v
+
 _needs_integration = pytest.mark.skipif(
-    not (os.getenv("SUPABASE_URL") and os.getenv("OPENAI_API_KEY")),
-    reason="Integration test: set SUPABASE_URL and OPENAI_API_KEY in .env to run",
+    not (_real_key("SUPABASE_URL") and _real_key("OPENAI_API_KEY")),
+    reason="Integration test: set real SUPABASE_URL and OPENAI_API_KEY in .env to run",
 )
 
 

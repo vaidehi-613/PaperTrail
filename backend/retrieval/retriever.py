@@ -17,7 +17,7 @@ class Source:
     similarity: float
 
 
-async def retrieve(query: str, paper_id: str, top_k: int = 5) -> list[Source]:
+async def retrieve(query: str, paper_id: str) -> list[Source]:
     settings = get_settings()
     client = AsyncOpenAI(api_key=settings.openai_api_key)
 
@@ -26,11 +26,13 @@ async def retrieve(query: str, paper_id: str, top_k: int = 5) -> list[Source]:
 
     sb = await get_supabase()
     result = await sb.rpc(
-        "match_chunks",
+        "match_chunks_hybrid",
         {
             "query_embedding": query_embedding,
+            "query_text": query,
             "filter_paper_id": paper_id,
-            "match_count": top_k,
+            "match_count": settings.retrieval_top_k,
+            "rrf_k": settings.rrf_k,
         },
     ).execute()
 
