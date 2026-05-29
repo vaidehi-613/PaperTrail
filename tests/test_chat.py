@@ -21,7 +21,7 @@ async def test_chat_response_shape(monkeypatch) -> None:
     """POST /chat returns {answer, sources, scholar_results} without hitting real services."""
     from backend.main import app
 
-    async def fake_run_agent(paper_id, question):
+    async def fake_run_agent(paper_id, question, paper_title=""):
         return FAKE_ANSWER, [FAKE_SOURCE], []
 
     monkeypatch.setattr("backend.routers.chat.run_agent", fake_run_agent)

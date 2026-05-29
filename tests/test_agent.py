@@ -50,11 +50,13 @@ def test_parse_tool_messages_retrieve() -> None:
 
 
 def test_parse_tool_messages_scholar() -> None:
+    # get_forward_citations wraps results in {"resolved_paper": ..., "papers": [...]}
+    payload = {"resolved_paper": {"title": "Attention Is All You Need"}, "papers": [FAKE_SCHOLAR]}
     msgs = [
         SystemMessage(content="sys"),
         HumanMessage(content="question"),
-        AIMessage(content="", tool_calls=[{"name": "scholar_search_tool", "id": "t2", "args": {}}]),
-        ToolMessage(content=json.dumps([FAKE_SCHOLAR]), name="scholar_search_tool", tool_call_id="t2"),
+        AIMessage(content="", tool_calls=[{"name": "get_forward_citations", "id": "t2", "args": {}}]),
+        ToolMessage(content=json.dumps(payload), name="get_forward_citations", tool_call_id="t2"),
         AIMessage(content="Related work found."),
     ]
     sources, scholar = _parse_tool_messages(msgs)
@@ -99,9 +101,13 @@ async def test_run_agent_scholar_path(monkeypatch) -> None:
 
     class _FakeGraph:
         async def ainvoke(self, state, **_kwargs):
+            payload = {
+                "resolved_paper": {"title": "Attention Is All You Need", "year": 2017},
+                "papers": [FAKE_SCHOLAR],
+            }
             tool_msg = ToolMessage(
-                content=json.dumps([FAKE_SCHOLAR]),
-                name="scholar_search_tool",
+                content=json.dumps(payload),
+                name="get_forward_citations",
                 tool_call_id="t2",
             )
             answer_msg = AIMessage(content="Papers that built on this include BERT (2019).")

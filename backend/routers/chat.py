@@ -11,6 +11,7 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     paper_id: str
     message: str
+    paper_title: str = ""  # filename of the uploaded paper, used to form scholar queries
 
 
 class SourceOut(BaseModel):
@@ -40,7 +41,9 @@ class ChatResponse(BaseModel):
 
 @router.post("", response_model=ChatResponse)
 async def chat(req: ChatRequest) -> ChatResponse:
-    answer, paper_sources, scholar_results = await run_agent(req.paper_id, req.message)
+    answer, paper_sources, scholar_results = await run_agent(
+        req.paper_id, req.message, req.paper_title
+    )
 
     return ChatResponse(
         answer=answer,

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Annotated
 
-from langchain_core.messages import BaseMessage, SystemMessage, ToolMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
@@ -11,25 +12,33 @@ from langgraph.prebuilt import ToolNode
 from typing_extensions import TypedDict
 
 from backend.agent.scholar import ScholarResult
-from backend.agent.tools import retrieve_paper, scholar_search_tool
+from backend.agent.tools import get_forward_citations, retrieve_paper, scholar_search_tool
 from backend.config import get_settings
 from backend.retrieval.retriever import Source
 
-_TOOLS = [retrieve_paper, scholar_search_tool]
+logger = logging.getLogger(__name__)
+
+_TOOLS = [retrieve_paper, get_forward_citations, scholar_search_tool]
 _TOOL_NODE = ToolNode(_TOOLS)
 
 _SYSTEM_TEMPLATE = (
-    "You are a research assistant helping a student understand a paper.\n"
-    "The uploaded paper ID is: {paper_id}\n\n"
+    "You are a research assistant helping a student understand a research paper.\n"
+    "Paper title / filename: {paper_title}\n"
+    "Internal paper ID (do NOT mention this in answers): {paper_id}\n\n"
     "Available tools:\n"
     "- retrieve_paper: fetch relevant passages from the paper. Always pass paper_id='{paper_id}'.\n"
-    "- scholar_search_tool: find related / newer academic papers on Semantic Scholar.\n\n"
+    "- get_forward_citations: find papers that CITE this paper (forward citation graph).\n"
+    "  Pass the FULL paper title (e.g. 'Attention Is All You Need').\n"
+    "  Use for: 'what came after', 'newer papers', 'papers that build on this'.\n"
+    "- scholar_search_tool: broad keyword search on Semantic Scholar.\n"
+    "  Use for: general related-work discovery, NOT for forward citations.\n\n"
     "Rules:\n"
-    "• For questions about the paper's content → call retrieve_paper.\n"
-    "• For questions about related/newer work → call scholar_search_tool.\n"
-    "• You may call both if the question warrants it.\n"
-    "• After gathering context, write a concise answer citing sources as [Section, p.N].\n"
-    "• If the excerpts don't contain the answer, say so clearly."
+    "• Questions about content → retrieve_paper.\n"
+    "• 'What came after / newer / citing papers' → get_forward_citations with the full paper title.\n"
+    "• General related-work → scholar_search_tool.\n"
+    "• You may call multiple tools if the question warrants it.\n"
+    "• Cite paper passages as [Section, p.N].\n"
+    "• NEVER reveal the paper_id UUID."
 )
 
 
@@ -83,23 +92,53 @@ def _parse_tool_messages(
             continue
 
         if msg.name == "retrieve_paper":
-            for row in data:
-                paper_sources.append(Source(**row))
+            if isinstance(data, list):
+                for row in data:
+                    paper_sources.append(Source(**row))
+
+        elif msg.name == "get_forward_citations":
+            if isinstance(data, dict) and "papers" in data:
+                for row in data["papers"]:
+                    scholar_results.append(ScholarResult(
+                        title=row["title"],
+                        authors=row["authors"],
+                        year=row["year"],
+                        abstract=row["abstract"],
+                        doi=row["doi"],
+                        url=row["url"],
+                        fields_of_study=row.get("fields_of_study"),
+                    ))
+
         elif msg.name == "scholar_search_tool":
-            for row in data:
-                scholar_results.append(ScholarResult(**row))
+            if isinstance(data, list):
+                for row in data:
+                    scholar_results.append(ScholarResult(
+                        title=row["title"],
+                        authors=row["authors"],
+                        year=row["year"],
+                        abstract=row["abstract"],
+                        doi=row["doi"],
+                        url=row["url"],
+                    ))
 
     return paper_sources, scholar_results
 
 
 async def run_agent(
-    paper_id: str, question: str
+    paper_id: str, question: str, paper_title: str = ""
 ) -> tuple[str, list[Source], list[ScholarResult]]:
     system_msg = SystemMessage(
-        content=_SYSTEM_TEMPLATE.format(paper_id=paper_id)
+        content=_SYSTEM_TEMPLATE.format(
+            paper_id=paper_id,
+            paper_title=paper_title or "unknown",
+        )
     )
-    from langchain_core.messages import HumanMessage
     human_msg = HumanMessage(content=question)
+
+    logger.info(
+        "[agent] run_agent  paper_id=%s  paper_title=%r  question=%r",
+        paper_id, paper_title, question,
+    )
 
     result = await _graph.ainvoke(
         {"paper_id": paper_id, "messages": [system_msg, human_msg]}
