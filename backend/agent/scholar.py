@@ -111,6 +111,10 @@ async def resolve_paper_oa(title: str, min_overlap: float = 0.55) -> tuple[str, 
         logger.warning("[scholar] 429 from OpenAlex on resolve — unexpected")
         return None
 
+    if resp.status_code >= 400:
+        logger.warning("[scholar] %d from OpenAlex on resolve  title=%r", resp.status_code, title)
+        return None
+
     resp.raise_for_status()
     items = resp.json().get("results", [])
     logger.info("[scholar] resolve_paper_oa  candidates=%d", len(items))

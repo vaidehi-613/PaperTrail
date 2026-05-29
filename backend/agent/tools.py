@@ -68,7 +68,7 @@ async def get_forward_citations(paper_title: str) -> str:
             "title": meta["title"],
             "year": meta["year"],
             "authors": meta["authors"],
-            "ss_id": ss_id,
+            "oa_id": oa_id,
         },
         "papers": [
             {
