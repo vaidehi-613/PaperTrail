@@ -22,7 +22,7 @@ async def test_chat_response_shape(monkeypatch) -> None:
     from backend.main import app
 
     async def fake_run_agent(paper_id, question, paper_title=""):
-        return FAKE_ANSWER, [FAKE_SOURCE], []
+        return FAKE_ANSWER, [FAKE_SOURCE], [], []  # answer, sources, scholar_results, verifications
 
     monkeypatch.setattr("backend.routers.chat.run_agent", fake_run_agent)
 
@@ -46,3 +46,4 @@ async def test_chat_response_shape(monkeypatch) -> None:
     assert src["is_table"] is False
     assert src["is_figure"] is False
     assert data["scholar_results"] == []
+    assert data["verifications"] == []

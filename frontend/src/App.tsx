@@ -50,13 +50,14 @@ export default function App() {
     setIsLoading(true)
 
     try {
-      const { answer, sources, scholar_results } = await sendChat(activePaperId, text)
+      const { answer, sources, scholar_results, verifications } = await sendChat(activePaperId, text, activePaperName ?? "")
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: answer,
         sources,
         scholar_results,
+        verifications,
       }
       setMessages((prev) => [...prev, assistantMsg])
     } catch (err) {

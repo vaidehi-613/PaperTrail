@@ -1,4 +1,4 @@
-import type { ScholarResult, Source } from './types'
+import type { ScholarResult, Source, VerificationResult } from './types'
 
 export async function uploadPaper(
   file: File,
@@ -13,11 +13,12 @@ export async function uploadPaper(
 export async function sendChat(
   paper_id: string,
   message: string,
-): Promise<{ answer: string; sources: Source[]; scholar_results: ScholarResult[] }> {
+  paper_title: string = "",
+): Promise<{ answer: string; sources: Source[]; scholar_results: ScholarResult[]; verifications: VerificationResult[] }> {
   const res = await fetch('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paper_id, message }),
+    body: JSON.stringify({ paper_id, message, paper_title }),
   })
   if (!res.ok) throw new Error(`Chat failed: ${res.statusText}`)
   return res.json()

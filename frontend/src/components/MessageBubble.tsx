@@ -1,4 +1,4 @@
-import type { Message, ScholarResult, Source } from '../types'
+import type { Message, ScholarResult, Source, VerificationResult } from '../types'
 
 function dedupSources(sources: Source[]): Source[] {
   const seen = new Set<string>()
@@ -33,16 +33,33 @@ function SourceChip({ source }: { source: Source }) {
   )
 }
 
-function ScholarCard({ result }: { result: ScholarResult }) {
+function ScholarCard({ result, verification }: { result: ScholarResult; verification?: VerificationResult }) {
   const authors = result.authors.slice(0, 2).join(', ') +
     (result.authors.length > 2 ? ' et al.' : '')
 
+  const badge = verification ? (
+    <span
+      className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
+      style={{
+        background: verification.status === 'verified' ? '#10b981' :
+                    verification.status === 'flagged' ? '#f59e0b' :
+                    '#ef4444',
+        color: 'white'
+      }}
+      title={verification.note || verification.status}
+    >
+      {verification.status === 'verified' ? '✓' :
+       verification.status === 'flagged' ? '⚠' : '✗'}
+    </span>
+  ) : null
+
   const inner = (
     <div
-      className="rounded-lg border px-3 py-2 text-xs transition-colors hover:bg-white"
+      className="relative rounded-lg border px-3 py-2 text-xs transition-colors hover:bg-white"
       style={{ borderColor: '#E5E3DE' }}
     >
-      <p className="font-medium text-gray-800 line-clamp-1">{result.title}</p>
+      {badge}
+      <p className="font-medium text-gray-800 line-clamp-1 pr-6">{result.title}</p>
       <p className="mt-0.5 text-gray-500">
         {authors}{result.year ? ` · ${result.year}` : ''}
       </p>
@@ -60,6 +77,14 @@ type Props = { message: Message }
 
 export function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user'
+
+  // Build a lookup map for verifications by title
+  const verificationMap = new Map<string, VerificationResult>()
+  if (message.verifications) {
+    for (const v of message.verifications) {
+      verificationMap.set(v.title.toLowerCase(), v)
+    }
+  }
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -87,7 +112,11 @@ export function MessageBubble({ message }: Props) {
           <div className="flex w-full flex-col gap-1.5 px-1">
             <p className="text-xs font-medium text-gray-400">Related papers</p>
             {message.scholar_results.map((r, i) => (
-              <ScholarCard key={i} result={r} />
+              <ScholarCard
+                key={i}
+                result={r}
+                verification={verificationMap.get(r.title.toLowerCase())}
+              />
             ))}
           </div>
         )}

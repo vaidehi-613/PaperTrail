@@ -15,6 +15,7 @@ from backend.agent.scholar import ScholarResult
 from backend.agent.tools import get_forward_citations, retrieve_paper, scholar_search_tool
 from backend.config import get_settings
 from backend.retrieval.retriever import Source
+from backend.verifier.checks import VerificationResult, verify_scholar_results
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ def _parse_tool_messages(
 
 async def run_agent(
     paper_id: str, question: str, paper_title: str = ""
-) -> tuple[str, list[Source], list[ScholarResult]]:
+) -> tuple[str, list[Source], list[ScholarResult], list[VerificationResult]]:
     system_msg = SystemMessage(
         content=_SYSTEM_TEMPLATE.format(
             paper_id=paper_id,
@@ -146,4 +147,32 @@ async def run_agent(
 
     answer = result["messages"][-1].content or ""
     paper_sources, scholar_results = _parse_tool_messages(result["messages"])
-    return answer, paper_sources, scholar_results
+
+    # Run verifier on scholar results
+    verifications: list[VerificationResult] = []
+    if scholar_results:
+        verifications = await verify_scholar_results(answer, scholar_results)
+
+        # Reflection loop: regenerate if any citation is not_found or retracted
+        bad = [v.title for v in verifications if v.status in ("not_found", "retracted")]
+        if bad:
+            logger.info("[agent] reflection loop  bad_citations=%s", bad)
+            rejection_note = (
+                "\n\nIMPORTANT: The following citations could not be verified or are retracted "
+                f"— do NOT cite them: {', '.join(bad)}"
+            )
+            system_msg_retry = SystemMessage(
+                content=_SYSTEM_TEMPLATE.format(
+                    paper_id=paper_id,
+                    paper_title=paper_title or "unknown",
+                ) + rejection_note
+            )
+            result2 = await _graph.ainvoke(
+                {"paper_id": paper_id, "messages": [system_msg_retry, human_msg]}
+            )
+            answer = result2["messages"][-1].content or ""
+            paper_sources, scholar_results = _parse_tool_messages(result2["messages"])
+            if scholar_results:
+                verifications = await verify_scholar_results(answer, scholar_results)
+
+    return answer, paper_sources, scholar_results, verifications

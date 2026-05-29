@@ -87,12 +87,13 @@ async def test_run_agent_retrieve_path(monkeypatch) -> None:
 
     monkeypatch.setattr("backend.agent.graph._graph", _FakeGraph())
 
-    answer, sources, scholar = await run_agent("paper-123", "How does self-attention work?")
+    answer, sources, scholar, verifications = await run_agent("paper-123", "How does self-attention work?")
 
     assert "self-attention" in answer.lower()
     assert len(sources) == 1
     assert sources[0].section == "3.2 Attention"
     assert len(scholar) == 0
+    assert len(verifications) == 0
 
 
 @pytest.mark.asyncio
@@ -115,7 +116,7 @@ async def test_run_agent_scholar_path(monkeypatch) -> None:
 
     monkeypatch.setattr("backend.agent.graph._graph", _FakeGraph())
 
-    answer, sources, scholar = await run_agent("paper-123", "What came after this paper?")
+    answer, sources, scholar, verifications = await run_agent("paper-123", "What came after this paper?")
 
     assert "BERT" in answer
     assert len(sources) == 0

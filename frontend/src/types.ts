@@ -17,12 +17,21 @@ export type ScholarResult = {
   url: string | null
 }
 
+export type VerificationResult = {
+  title: string
+  status: 'verified' | 'flagged' | 'not_found' | 'retracted'
+  doi: string | null
+  url: string | null
+  note: string | null
+}
+
 export type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
   sources?: Source[]
   scholar_results?: ScholarResult[]
+  verifications?: VerificationResult[]
 }
 
 export type Chat = {

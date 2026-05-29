@@ -100,7 +100,7 @@ async def resolve_paper_oa(title: str, min_overlap: float = 0.55) -> tuple[str, 
         "filter": f"title.search:{title}",
         "sort": "cited_by_count:desc",  # most-cited = canonical paper
         "per_page": 5,
-        "select": "id,title,publication_year,authorships,concepts,doi,open_access",
+        "select": "id,title,publication_year,authorships,concepts,doi,is_retracted",
     }
     logger.info("[scholar] resolve_paper_oa  query=%r  url=%s", title, url)
 
@@ -131,6 +131,7 @@ async def resolve_paper_oa(title: str, min_overlap: float = 0.55) -> tuple[str, 
                             for a in (item.get("authorships") or [])[:5]],
                 "concepts": concepts,
                 "doi": (item.get("doi") or "").replace("https://doi.org/", "") or None,
+                "is_retracted": item.get("is_retracted", False),
             }
             logger.info("[scholar] RESOLVED  oa_id=%s  title=%r  year=%s  authors=%s  concepts=%s",
                         oa_id, meta["title"], meta["year"], meta["authors"][:2], meta["concepts"][:3])
