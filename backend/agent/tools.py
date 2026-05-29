@@ -6,7 +6,7 @@ from langchain_core.tools import tool
 from backend.agent.scholar import (
     ScholarResult,
     get_citing_papers,
-    resolve_paper_ss,
+    resolve_paper_oa,
     scholar_keyword_search,
 )
 from backend.retrieval.retriever import Source, retrieve as _retrieve
@@ -42,20 +42,20 @@ async def get_forward_citations(paper_title: str) -> str:
     Use for questions like 'what came after this?', 'papers that build on this', 'newer work'."""
     logger.info("[tool] get_forward_citations  paper_title=%r", paper_title)
 
-    resolved = await resolve_paper_ss(paper_title)
+    resolved = await resolve_paper_oa(paper_title)
     if resolved is None:
         return json.dumps({
             "error": f"Could not confidently identify '{paper_title}' in Semantic Scholar. "
                      "No forward citations retrieved."
         })
 
-    ss_id, meta = resolved
+    oa_id, meta = resolved
     logger.info(
-        "[tool] resolved  ss_id=%s  title=%r  year=%s  authors=%s  fields=%s",
-        ss_id, meta["title"], meta["year"], meta["authors"], meta["fields_of_study"],
+        "[tool] resolved  oa_id=%s  title=%r  year=%s  authors=%s  concepts=%s",
+        oa_id, meta["title"], meta["year"], meta["authors"], meta.get("concepts"),
     )
 
-    citing = await get_citing_papers(ss_id, meta["fields_of_study"])
+    citing = await get_citing_papers(oa_id, meta.get("concepts") or [])
     if not citing:
         return json.dumps({
             "resolved_paper": meta,

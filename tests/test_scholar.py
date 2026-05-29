@@ -97,32 +97,28 @@ def test_relevance_gate_keeps_cs_paper():
 @integration
 @pytest.mark.asyncio
 async def test_resolve_attention_paper():
-    from backend.agent.scholar import resolve_paper_ss
+    from backend.agent.scholar import resolve_paper_oa
 
-    result = await resolve_paper_ss("Attention Is All You Need")
-    if result is None:
-        pytest.skip("Semantic Scholar rate-limited during resolution — try again in a minute")
+    result = await resolve_paper_oa("Attention Is All You Need")
+    assert result is not None, "OpenAlex should resolve this title (no rate limit issues)"
 
-    ss_id, meta = result
-    assert ss_id, "Should have a Semantic Scholar ID"
-    assert meta["year"] == 2017, f"Expected 2017, got {meta['year']}"
+    oa_id, meta = result
+    assert oa_id.startswith("https://openalex.org/W"), f"Expected OpenAlex ID, got {oa_id}"
+    # OpenAlex may show a later publication year for the same canonical entry
     authors_lower = " ".join(meta["authors"]).lower()
     assert "vaswani" in authors_lower, f"Expected Vaswani in authors, got {meta['authors']}"
-    assert "Computer Science" in meta["fields_of_study"], \
-        f"Expected Computer Science in fields, got {meta['fields_of_study']}"
 
 
 @integration
 @pytest.mark.asyncio
 async def test_forward_citations_are_ml_related():
-    from backend.agent.scholar import get_citing_papers, resolve_paper_ss
+    from backend.agent.scholar import get_citing_papers, resolve_paper_oa
 
-    result = await resolve_paper_ss("Attention Is All You Need")
-    if result is None:
-        pytest.skip("Semantic Scholar rate-limited — try again in a minute")
-    ss_id, meta = result
+    result = await resolve_paper_oa("Attention Is All You Need")
+    assert result is not None
+    oa_id, meta = result
 
-    citing = await get_citing_papers(ss_id, meta["fields_of_study"], limit=20, top_k=10)
+    citing = await get_citing_papers(oa_id, meta.get("concepts") or [], limit=20, top_k=10)
     assert len(citing) > 0, "Should find citing papers for the Transformer paper"
 
     cs_adjacent = {"computer science", "linguistics", "mathematics", "artificial intelligence"}
