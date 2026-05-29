@@ -1,5 +1,15 @@
 import type { Message, Source } from '../types'
 
+function dedupSources(sources: Source[]): Source[] {
+  const seen = new Set<string>()
+  return sources.filter((s) => {
+    const key = `${s.section ?? ''}|${s.page ?? ''}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 function SourceChip({ source }: { source: Source }) {
   const label =
     source.section && source.page
@@ -44,7 +54,7 @@ export function MessageBubble({ message }: Props) {
 
         {!isUser && message.sources && message.sources.length > 0 && (
           <div className="flex flex-wrap gap-1.5 px-1">
-            {message.sources.map((s) => (
+            {dedupSources(message.sources).map((s) => (
               <SourceChip key={s.id} source={s} />
             ))}
           </div>
