@@ -1,31 +1,53 @@
 # PaperTrail
 
-> **Agentic research-paper companion with citation verification** — Read papers, discover what came next, and trust that every citation is verified against real scholarly databases.
+> **Agentic research-paper companion with enforced citation grounding** — Every claim cited to exact location in the paper. No hallucinations, only verified facts.
 
-PaperTrail solves the LLM hallucination problem in research: it won't cite papers that don't exist. Every cited work is checked against OpenAlex and Crossref; misleading claims are flagged with LLM-as-judge fact-checking.
+PaperTrail is the first "chat with PDF" tool that **enforces inline citations** in every answer. Students can trust the assistant because every factual claim includes `[Section, p.X]` or `[Table N, p.X]` citations drawn from the paper's actual content — never invented. External citations are verified against OpenAlex and Crossref scholarly databases, with color-coded provenance badges.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Student uploads PDF → Chat with tables/figures extracted      │
-│  "What came after this paper?" → Forward citations from OpenAlex│
-│  Every citation ✓ verified, ⚠ flagged, or ✗ not found          │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  Student uploads PDF → Chat with understanding questions         │
+│  "What's the main contribution?" → Inline-cited answer           │
+│  "What came after this paper?" → Verified citing papers          │
+│  Every answer: [Section/Table/Figure, p.X] citations required   │
+└──────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## The Core Differentiator: Inline Citation Enforcement
+
+**Unlike generic "chat with PDF" tools, PaperTrail REQUIRES inline citations in every answer:**
+
+- ✅ **Every claim has a citation**: `[Introduction, p.1]`, `[Table 2, p.5]`, `[Figure 3, p.8]`
+- ✅ **Tables and figures explicitly labeled**: "Table 2 shows..." not "the paper mentions..."
+- ✅ **Citations from metadata, never invented**: Section/page/table/figure drawn from chunk metadata
+- ✅ **"Not covered" guardrail**: If question unanswerable from paper → honest response, not hallucination
+- ✅ **No parametric memory**: Answers ONLY from retrieved chunks, never from LLM training data
+- ✅ **Citation validation**: Backend checks for `[p.X]` patterns; logs warnings if missing
+
+**Result**: Students can verify every claim by jumping to the cited location in the paper.
 
 ---
 
 ## Features
 
-- **📄 PDF Ingestion**: DocLing parser extracts text, tables, and figures (not just prose)
-- **🔍 Hybrid Search**: Vector ANN + BM25 keyword search fused with RRF, then reranked with cross-encoder
-- **🤖 Agentic Orchestration**: LangGraph tool-calling loop decides when to retrieve from paper vs. search scholarly APIs
-- **✅ Three-Part Citation Verifier** (the core differentiator):
+### Understanding & Trust (Core Experience)
+- **📄 PDF Ingestion with Metadata**: DocLing parser extracts text, tables, and figures with section/page labels
+- **🔍 Hybrid Search + Reranking**: Vector ANN + BM25 keyword search → RRF fusion → cross-encoder reranking
+- **📌 Inline Citation Enforcement**: Every answer includes `[Section, p.X]` / `[Table N, p.X]` / `[Figure N, p.X]`
+- **🔐 Grounding Guardrails**: Answers ONLY from retrieved content; no parametric knowledge; "not covered" handling
+
+### Verification & Related Work (Secondary Features)
+- **🤖 Agentic Orchestration**: LangGraph tool-calling loop (retrieve_paper, get_forward_citations, scholar_search)
+- **✅ Three-Part Citation Verifier**:
   1. **Existence check**: Does the paper resolve in OpenAlex/Crossref?
   2. **Retraction check**: Is it flagged in the Crossref retraction database?
-  3. **Claim support**: Does the abstract actually support what the LLM said about it? (LLM-as-judge NLI)
-- **🔗 Forward Citations**: "What papers came after this?" → OpenAlex citation graph, relevance-filtered by field + influence
-- **🔐 Prompt Injection Guardrails**: XML `<data>` tags separate instructions from untrusted content (PDF text, user input); output validation blocks UUID leaks and jailbreak attempts
-- **📊 Observability**: Langfuse tracing across LLM calls, embeddings, and tool use
+  3. **Claim support**: Does the abstract support the claim? (LLM-as-judge NLI)
+- **🔗 Relevance-Based Forward Citations**: Papers that cite this one, ranked by semantic similarity + citation count (not just popularity)
+- **📊 Provenance Badges**: ✓ verified (green), ⚠ flagged (amber), ✗ not found (red)
+- **🔐 Prompt Injection Defense**: XML `<data>` tags separate instructions from untrusted PDF content
+- **📈 Observability**: Langfuse tracing across LLM calls, embeddings, and tool use
 
 ---
 
