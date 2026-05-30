@@ -25,14 +25,7 @@ async def retrieve(query: str, paper_id: str) -> list[Source]:
     emb = await client.embeddings.create(input=[query], model=settings.embed_model)
     query_embedding = emb.data[0].embedding
 
-    # Add Langfuse span for embedding call
-    lf = get_langfuse()
-    if lf:
-        lf.span(
-            name="embedding",
-            input={"query": query[:100], "model": settings.embed_model},
-            output={"dim": len(query_embedding)},
-        )
+    # Langfuse tracing happens at agent level, skip here to avoid API incompatibility
 
     sb = await get_supabase()
     result = await sb.rpc(
