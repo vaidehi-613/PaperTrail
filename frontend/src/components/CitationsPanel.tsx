@@ -39,7 +39,7 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
         </h2>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {citations.map((item, idx) => (
           <CitationCard key={idx} {...item} />
         ))}
@@ -49,77 +49,103 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
 }
 
 function CitationCard({ paper, verification }: CitationWithVerification) {
-  const badge = verification ? getVerificationBadge(verification.status) : null
+  const badge = verification ? getCircularBadge(verification.status) : null
+  const url = paper.url || (paper.doi ? `https://doi.org/${paper.doi}` : null)
 
-  return (
-    <article
-      className="rounded-lg border p-3 text-sm"
-      style={{ borderColor: '#E5E3DE', background: '#FFFFFB' }}
+  // Format authors: "First Author, Second Author et al."
+  const authorsText = paper.authors.length > 0
+    ? paper.authors.slice(0, 2).join(', ') + (paper.authors.length > 2 ? ' et al.' : '')
+    : 'Unknown authors'
+
+  const CardContent = (
+    <div
+      className="relative flex items-start gap-3 rounded-xl border p-3.5 transition-shadow hover:shadow-md"
+      style={{
+        borderColor: '#E5E3DE',
+        background: '#FFFFFF',
+        cursor: url ? 'pointer' : 'default'
+      }}
     >
-      {/* Title with badge */}
-      <div className="mb-2 flex items-start gap-2">
-        <h3 className="flex-1 font-semibold leading-tight" style={{ color: '#3E3C38' }}>
+      {/* Left: Paper info */}
+      <div className="flex-1 min-w-0">
+        {/* Title - bold, 2 lines max */}
+        <h3
+          className="font-semibold leading-snug line-clamp-2 mb-1.5"
+          style={{ color: '#1a1a1a', fontSize: '14px' }}
+        >
           {paper.title}
         </h3>
-        {badge && (
-          <span
-            className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium"
-            style={{ background: badge.bg, color: badge.text }}
-          >
-            {badge.label}
-          </span>
-        )}
+
+        {/* Authors · Year - muted grey */}
+        <p className="text-xs text-gray-500">
+          {authorsText}
+          {paper.year && ` · ${paper.year}`}
+        </p>
       </div>
 
-      {/* Authors & Year */}
-      <p className="mb-2 text-xs text-gray-500">
-        {paper.authors.slice(0, 3).join(', ')}
-        {paper.authors.length > 3 && ` +${paper.authors.length - 3}`}
-        {paper.year && ` • ${paper.year}`}
-      </p>
-
-      {/* Abstract snippet */}
-      {paper.abstract && (
-        <p className="mb-2 line-clamp-3 text-xs leading-relaxed text-gray-600">
-          {paper.abstract}
-        </p>
+      {/* Right: Circular badge - vertically centered */}
+      {badge && (
+        <div className="flex items-center shrink-0" style={{ height: '100%' }}>
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{
+              width: '20px',
+              height: '20px',
+              background: badge.bg,
+            }}
+            title={badge.title}
+          >
+            <span className="text-white font-bold" style={{ fontSize: '11px' }}>
+              {badge.icon}
+            </span>
+          </div>
+        </div>
       )}
-
-      {/* Verification note */}
-      {verification?.note && (
-        <p className="mb-2 text-xs italic text-gray-500">
-          {verification.note}
-        </p>
-      )}
-
-      {/* Link */}
-      {(paper.url || paper.doi) && (
-        <a
-          href={paper.url || `https://doi.org/${paper.doi}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-          style={{ color: '#6557D6' }}
-        >
-          View paper
-          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      )}
-    </article>
+    </div>
   )
+
+  // If URL exists, make the whole card clickable
+  if (url) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block no-underline"
+      >
+        {CardContent}
+      </a>
+    )
+  }
+
+  return CardContent
 }
 
-function getVerificationBadge(status: VerificationResult['status']) {
+function getCircularBadge(status: VerificationResult['status']) {
   switch (status) {
     case 'verified':
-      return { label: '✓ Verified', bg: '#D1FAE5', text: '#065F46' }
+      return {
+        icon: '✓',
+        bg: '#10B981', // Green
+        title: 'Verified: DOI/identifier resolves in OpenAlex/Crossref'
+      }
     case 'flagged':
-      return { label: '⚠ Flagged', bg: '#FEF3C7', text: '#92400E' }
+      return {
+        icon: '⚠',
+        bg: '#F59E0B', // Amber
+        title: 'Flagged: Paper exists but claim may be contradicted'
+      }
     case 'not_found':
-      return { label: '✗ Not Found', bg: '#FEE2E2', text: '#991B1B' }
+      return {
+        icon: '✗',
+        bg: '#EF4444', // Red
+        title: 'Not found: Paper does not resolve in OpenAlex'
+      }
     case 'retracted':
-      return { label: '⚠ Retracted', bg: '#FEE2E2', text: '#991B1B' }
+      return {
+        icon: '⚠',
+        bg: '#EF4444', // Red
+        title: 'Retracted: Paper has been retracted'
+      }
   }
 }
