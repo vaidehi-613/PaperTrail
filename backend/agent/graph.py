@@ -76,10 +76,25 @@ class AgentState(TypedDict):
 
 def _router_node(state: AgentState) -> dict:
     settings = get_settings()
-    llm = ChatOpenAI(
-        model=settings.llm_model,
-        api_key=settings.openai_api_key,
-    ).bind_tools(_TOOLS)
+
+    # Check if question is about forward citations
+    last_message = state["messages"][-1].content.lower()
+    requires_tool = any(phrase in last_message for phrase in [
+        "came after", "built on", "cite this", "citing papers",
+        "newer papers", "what papers", "related work"
+    ])
+
+    # Force tool use for forward citation questions
+    if requires_tool:
+        llm = ChatOpenAI(
+            model=settings.llm_model,
+            api_key=settings.openai_api_key,
+        ).bind_tools(_TOOLS, tool_choice="any")  # Force tool use
+    else:
+        llm = ChatOpenAI(
+            model=settings.llm_model,
+            api_key=settings.openai_api_key,
+        ).bind_tools(_TOOLS)
 
     callback = get_callback()
     config = {"callbacks": [callback]} if callback else {}
