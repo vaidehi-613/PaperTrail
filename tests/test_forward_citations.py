@@ -27,6 +27,7 @@ async def test_get_forward_citations_success():
         "year": 2017,
         "authors": ["Vaswani", "Shazeer"],
         "concepts": ["deep learning", "transformers"],
+        "abstract": "The dominant sequence transduction models are based on complex recurrent...",
     })
 
     mock_citing = [
@@ -84,4 +85,4 @@ async def test_get_forward_citations_no_citing_papers():
 
         assert result["papers"] == []
         assert "note" in result
-        assert "No relevant citing papers found" in result["note"]
+        assert "No citing papers found" in result["note"]

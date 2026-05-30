@@ -40,29 +40,37 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
 @tool
 async def get_forward_citations(paper_title: str) -> str:
     """Find papers that CITE the given paper (forward citations / 'what came after').
-    Pass the full paper title. Uses the Semantic Scholar citations graph — not a keyword search.
+    Pass the full paper title. Uses OpenAlex citations graph with relevance-based ranking.
     Use for questions like 'what came after this?', 'papers that build on this', 'newer work'."""
     logger.info("[tool] get_forward_citations  paper_title=%r", paper_title)
 
     resolved = await resolve_paper_oa(paper_title)
     if resolved is None:
         result = json.dumps({
-            "error": f"Could not confidently identify '{paper_title}' in Semantic Scholar. "
+            "error": f"Could not confidently identify '{paper_title}' in OpenAlex. "
                      "No forward citations retrieved."
         })
         return wrap_data(result, "tool_result")
 
     oa_id, meta = resolved
     logger.info(
-        "[tool] resolved  oa_id=%s  title=%r  year=%s  authors=%s  concepts=%s",
-        oa_id, meta["title"], meta["year"], meta["authors"], meta.get("concepts"),
+        "[tool] resolved  oa_id=%s  title=%r  year=%s  authors=%s",
+        oa_id, meta["title"], meta["year"], meta["authors"][:2],
     )
 
-    citing = await get_citing_papers(oa_id, meta.get("concepts") or [])
+    # Pass source title + abstract for relevance-based ranking
+    source_abstract = meta.get("abstract")  # OpenAlex may not have abstract in resolve
+    citing = await get_citing_papers(
+        oa_id,
+        source_title=meta["title"],
+        source_abstract=source_abstract,
+        top_k=10,
+    )
+
     if not citing:
         result = json.dumps({
             "resolved_paper": meta,
-            "note": "No relevant citing papers found (may be rate-limited or field-filtered).",
+            "note": "No citing papers found (may be rate-limited or no citations yet).",
             "papers": [],
         })
         return wrap_data(result, "tool_result")
