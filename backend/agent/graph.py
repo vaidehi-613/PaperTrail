@@ -60,9 +60,11 @@ _SYSTEM_TEMPLATE = (
     "   NEVER write DOIs, URLs, or 'Read more' links — those appear automatically in the cards.\n\n"
     "Tool usage:\n"
     "• Questions about content → retrieve_paper.\n"
-    "• 'What came after / newer / citing papers' → get_forward_citations with the full paper title.\n"
+    "• 'What came after / newer / citing papers' → MUST call get_forward_citations with the full paper title.\n"
     "• General related-work → scholar_search_tool.\n"
-    "• You may call multiple tools if the question warrants it.\n"
+    "• You may call multiple tools if the question warrants it.\n\n"
+    "CRITICAL: When asked 'what came after', 'what papers cite', 'newer papers', you MUST call\n"
+    "get_forward_citations tool. DO NOT answer from your training data. ALWAYS use the tool first.\n"
     "• NEVER reveal the paper_id UUID."
 )
 
