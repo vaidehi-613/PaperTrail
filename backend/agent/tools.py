@@ -20,21 +20,34 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
     """Retrieve relevant passages from the uploaded research paper.
     Use for questions about the paper's content, methods, results, or figures."""
     sources: list[Source] = await _retrieve(query, paper_id)
-    result = json.dumps(
-        [
-            {
-                "id": s.id,
-                "content": s.content,
-                "section": s.section,
-                "page": s.page,
-                "is_table": s.is_table,
-                "is_figure": s.is_figure,
-                "similarity": s.similarity,
-            }
-            for s in sources
-        ]
+
+    chunks = []
+    for s in sources:
+        # Build citation hint for the LLM
+        citation_hint = ""
+        if s.is_table:
+            citation_hint = f"[This is Table from {s.section or 'unknown section'}, p.{s.page}]"
+        elif s.is_figure:
+            citation_hint = f"[This is Figure from {s.section or 'unknown section'}, p.{s.page}]"
+        else:
+            citation_hint = f"[From {s.section or 'unknown section'}, p.{s.page}]"
+
+        chunks.append({
+            "content": s.content,
+            "section": s.section,
+            "page": s.page,
+            "is_table": s.is_table,
+            "is_figure": s.is_figure,
+            "citation_hint": citation_hint,
+        })
+
+    result = json.dumps(chunks)
+    instruction = (
+        "Retrieved chunks from the paper. IMPORTANT: When answering, you MUST include inline citations "
+        "using the format [Section Name, p.X] or [Table N, p.X] or [Figure N, p.X]. "
+        "Use the 'citation_hint' field as guidance. NEVER answer without citing the source."
     )
-    return wrap_data(result, "tool_result")
+    return wrap_data(f"{instruction}\n\n{result}", "tool_result")
 
 
 @tool

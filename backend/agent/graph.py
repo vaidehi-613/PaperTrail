@@ -44,14 +44,25 @@ _SYSTEM_TEMPLATE = (
     "  Use for: 'what came after', 'newer papers', 'papers that build on this'.\n"
     "- scholar_search_tool: broad keyword search on Semantic Scholar.\n"
     "  Use for: general related-work discovery, NOT for forward citations.\n\n"
-    "Rules:\n"
+    "CRITICAL CITATION RULES (NON-NEGOTIABLE):\n"
+    "1. EVERY factual claim about the paper MUST include an inline citation from the retrieved chunks.\n"
+    "2. Citation format:\n"
+    "   - Plain text: [Section Name, p.X] or [p.X] if no section\n"
+    "   - Tables: [Table N, p.X] — explicitly say 'Table N shows...'\n"
+    "   - Figures: [Figure N, p.X] — explicitly say 'Figure N illustrates...'\n"
+    "3. Use the EXACT section/page/table/figure metadata from retrieved chunks — NEVER invent.\n"
+    "4. If a chunk has is_table=true, you MUST say 'Table' (not 'the paper shows').\n"
+    "5. If a chunk has is_figure=true, you MUST say 'Figure' (not 'the authors mention').\n"
+    "6. If the question cannot be answered from retrieved content, say:\n"
+    "   'This paper doesn't cover [topic]. Would you like me to search related papers?'\n"
+    "7. NEVER use parametric knowledge about the paper — answer ONLY from retrieved chunks.\n"
+    "8. When describing citing papers: mention title, authors, and year ONLY.\n"
+    "   NEVER write DOIs, URLs, or 'Read more' links — those appear automatically in the cards.\n\n"
+    "Tool usage:\n"
     "• Questions about content → retrieve_paper.\n"
     "• 'What came after / newer / citing papers' → get_forward_citations with the full paper title.\n"
     "• General related-work → scholar_search_tool.\n"
     "• You may call multiple tools if the question warrants it.\n"
-    "• Cite paper passages as [Section, p.N].\n"
-    "• When describing citing papers: mention title, authors, and year ONLY.\n"
-    "  NEVER write DOIs, URLs, or 'Read more' links — those appear automatically in the cards below.\n"
     "• NEVER reveal the paper_id UUID."
 )
 
@@ -142,6 +153,29 @@ def _parse_tool_messages(
     return paper_sources, scholar_results
 
 
+def _validate_citations_present(answer: str, paper_sources: list[Source]) -> bool:
+    """
+    Validate that if paper sources were retrieved, the answer contains inline citations.
+    Returns True if valid, False if citations are missing.
+    """
+    if not paper_sources:
+        # No sources retrieved — answer should say "not covered" or similar
+        return True
+
+    # Check for citation patterns: [anything, p.Y] or [Table N, p.Y] or [Figure N, p.Y] or [p.Y]
+    # This matches: [Introduction, p.1], [Section 3.2, p.5], [Table 1, p.7], [Figure 2, p.3], [p.10]
+    import re
+    citation_pattern = r'\[[^\]]*p\.\d+\]'
+    citations_found = re.findall(citation_pattern, answer)
+
+    if len(citations_found) == 0:
+        logger.warning("[agent] Answer has sources but NO inline citations detected")
+        return False
+
+    logger.info("[agent] Citations validated: found %d inline citations", len(citations_found))
+    return True
+
+
 async def run_agent(
     paper_id: str, question: str, paper_title: str = ""
 ) -> tuple[str, list[Source], list[ScholarResult], list[VerificationResult]]:
@@ -175,6 +209,12 @@ async def run_agent(
         return answer, [], [], []
 
     paper_sources, scholar_results = _parse_tool_messages(result["messages"])
+
+    # Validate citations are present when sources were retrieved
+    if paper_sources and not _validate_citations_present(answer, paper_sources):
+        logger.warning("[agent] Answer missing required citations — adding reminder")
+        # Append a note to the answer
+        answer += "\n\n[Note: Please refer to specific sections and pages in the paper for details.]"
 
     # Run verifier on scholar results
     verifications: list[VerificationResult] = []
