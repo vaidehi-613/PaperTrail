@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 
 from backend.config import get_settings
 from backend.db import get_supabase
+from backend.observability import get_langfuse
 
 
 @dataclass
@@ -23,6 +24,15 @@ async def retrieve(query: str, paper_id: str) -> list[Source]:
 
     emb = await client.embeddings.create(input=[query], model=settings.embed_model)
     query_embedding = emb.data[0].embedding
+
+    # Add Langfuse span for embedding call
+    lf = get_langfuse()
+    if lf:
+        lf.span(
+            name="embedding",
+            input={"query": query[:100], "model": settings.embed_model},
+            output={"dim": len(query_embedding)},
+        )
 
     sb = await get_supabase()
     result = await sb.rpc(

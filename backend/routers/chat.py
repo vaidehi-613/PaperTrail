@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from backend.agent.graph import run_agent
 from backend.agent.scholar import ScholarResult
@@ -15,6 +15,21 @@ class ChatRequest(BaseModel):
     paper_id: str
     message: str
     paper_title: str = ""
+
+    @field_validator("message")
+    @classmethod
+    def validate_message(cls, v: str) -> str:
+        if len(v) > 2000:
+            raise ValueError("Message too long (max 2000 chars)")
+        # Strip control characters except newlines and tabs
+        return "".join(c for c in v if c.isprintable() or c in "\n\t")
+
+    @field_validator("paper_title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        if len(v) > 500:
+            raise ValueError("Title too long (max 500 chars)")
+        return "".join(c for c in v if c.isprintable() or c.isspace())
 
 
 class SourceOut(BaseModel):

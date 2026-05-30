@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { sendChat, uploadPaper } from './api'
 import { ChatThread } from './components/ChatThread'
+import { CitationsPanel } from './components/CitationsPanel'
 import { InputBar } from './components/InputBar'
 import { PaperChip } from './components/PaperChip'
 import { Sidebar } from './components/Sidebar'
 import './index.css'
-import type { Chat, Message } from './types'
+import type { Chat, Message, ScholarResult, VerificationResult } from './types'
 
 const MOCK_CHATS: Chat[] = [
   {
@@ -87,6 +88,22 @@ export default function App() {
     }
   }
 
+  // Extract citing papers from messages with verifications
+  const citations = useMemo(() => {
+    const citationsMap = new Map<string, { paper: ScholarResult; verification: VerificationResult | null }>()
+
+    for (const msg of messages) {
+      if (msg.role === 'assistant' && msg.scholar_results) {
+        for (const paper of msg.scholar_results) {
+          const verification = msg.verifications?.find((v) => v.title === paper.title) || null
+          citationsMap.set(paper.title, { paper, verification })
+        }
+      }
+    }
+
+    return Array.from(citationsMap.values())
+  }, [messages])
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--surface-1)' }}>
       <Sidebar
@@ -128,6 +145,9 @@ export default function App() {
           disabled={isLoading}
         />
       </main>
+
+      {/* Citations panel */}
+      <CitationsPanel citations={citations} />
     </div>
   )
 }

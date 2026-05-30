@@ -23,6 +23,10 @@ class Settings(BaseSettings):
 
     semantic_scholar_api_key: str = ""
 
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",")]

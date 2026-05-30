@@ -9,6 +9,7 @@ from backend.agent.scholar import (
     resolve_paper_oa,
     scholar_keyword_search,
 )
+from backend.guardrails import wrap_data
 from backend.retrieval.retriever import Source, retrieve as _retrieve
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
     """Retrieve relevant passages from the uploaded research paper.
     Use for questions about the paper's content, methods, results, or figures."""
     sources: list[Source] = await _retrieve(query, paper_id)
-    return json.dumps(
+    result = json.dumps(
         [
             {
                 "id": s.id,
@@ -33,6 +34,7 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
             for s in sources
         ]
     )
+    return wrap_data(result, "tool_result")
 
 
 @tool
@@ -44,10 +46,11 @@ async def get_forward_citations(paper_title: str) -> str:
 
     resolved = await resolve_paper_oa(paper_title)
     if resolved is None:
-        return json.dumps({
+        result = json.dumps({
             "error": f"Could not confidently identify '{paper_title}' in Semantic Scholar. "
                      "No forward citations retrieved."
         })
+        return wrap_data(result, "tool_result")
 
     oa_id, meta = resolved
     logger.info(
@@ -57,13 +60,14 @@ async def get_forward_citations(paper_title: str) -> str:
 
     citing = await get_citing_papers(oa_id, meta.get("concepts") or [])
     if not citing:
-        return json.dumps({
+        result = json.dumps({
             "resolved_paper": meta,
             "note": "No relevant citing papers found (may be rate-limited or field-filtered).",
             "papers": [],
         })
+        return wrap_data(result, "tool_result")
 
-    return json.dumps({
+    result = json.dumps({
         "resolved_paper": {
             "title": meta["title"],
             "year": meta["year"],
@@ -83,6 +87,7 @@ async def get_forward_citations(paper_title: str) -> str:
             for r in citing
         ],
     })
+    return wrap_data(result, "tool_result")
 
 
 @tool
@@ -91,10 +96,11 @@ async def scholar_search_tool(query: str) -> str:
     Use for broad topic discovery — NOT for 'what papers cited this paper' (use get_forward_citations instead)."""
     results: list[ScholarResult] = await scholar_keyword_search(query)
     if not results:
-        return json.dumps({
+        result = json.dumps({
             "note": "No results returned. Semantic Scholar may be rate-limiting — try again in a minute."
         })
-    return json.dumps(
+        return wrap_data(result, "tool_result")
+    result = json.dumps(
         [
             {
                 "title": r.title,
@@ -107,3 +113,4 @@ async def scholar_search_tool(query: str) -> str:
             for r in results
         ]
     )
+    return wrap_data(result, "tool_result")

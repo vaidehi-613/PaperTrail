@@ -2,6 +2,12 @@ import io
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Load .env so skipif conditions (SUPABASE_URL, OPENAI_API_KEY) are visible at
+# collection time, before any backend module is imported.
+load_dotenv(Path(__file__).parent.parent / ".env")
+
 # PyTorch MPS (Apple Silicon) doesn't support float64; fall back to CPU for
 # ops that require it. Must be set before torch is imported.
 os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
