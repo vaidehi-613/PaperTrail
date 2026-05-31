@@ -84,12 +84,15 @@ def _router_node(state: AgentState) -> dict:
         "newer papers", "what papers", "related work"
     ])
 
+    logger.info(f"[router] Question: {last_message[:100]}, requires_tool={requires_tool}")
+
     # Force tool use for forward citation questions
     if requires_tool:
+        logger.info("[router] FORCING tool_choice='required' for forward citations")
         llm = ChatOpenAI(
             model=settings.llm_model,
             api_key=settings.openai_api_key,
-        ).bind_tools(_TOOLS, tool_choice="any")  # Force tool use
+        ).bind_tools(_TOOLS, tool_choice="required")  # Force at least one tool call
     else:
         llm = ChatOpenAI(
             model=settings.llm_model,
