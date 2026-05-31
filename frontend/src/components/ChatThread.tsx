@@ -13,7 +13,7 @@ export function ChatThread({ messages }: Props) {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-gray-400">
+      <div className="flex flex-1 items-center justify-center text-sm" style={{ color: 'var(--muted-text)' }}>
         Upload a paper and ask a question to get started.
       </div>
     )

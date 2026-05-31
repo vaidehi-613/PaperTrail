@@ -104,8 +104,14 @@ export default function App() {
     return Array.from(citationsMap.values())
   }, [messages])
 
+  // STATE B: Show panel if the latest assistant message has scholar_results
+  const showPanel = useMemo(() => {
+    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant')
+    return (lastAssistant?.scholar_results?.length ?? 0) > 0
+  }, [messages])
+
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--surface-1)' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--page-bg)' }}>
       <Sidebar
         chats={MOCK_CHATS}
         activeChatId={activeChatId}
@@ -118,18 +124,18 @@ export default function App() {
         onSelect={(id) => setActiveChatId(id)}
       />
 
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className={`flex flex-1 flex-col overflow-hidden ${showPanel ? 'chat-narrow' : 'chat-full'}`}>
         {/* Header */}
         <header
           className="flex items-center gap-3 border-b px-6 py-3"
-          style={{ borderColor: '#E5E3DE', background: '#FEF3C7' }}
+          style={{ borderColor: 'var(--border-1)', background: 'var(--surface-white)' }}
         >
           <PaperChip filename={activePaperName} />
           {!activePaperName && (
-            <span className="text-sm text-gray-400">No paper loaded — upload one to begin</span>
+            <span className="text-sm" style={{ color: 'var(--muted-text)' }}>No paper loaded — upload one to begin</span>
           )}
           {isLoading && (
-            <span className="ml-auto text-xs text-gray-400 animate-pulse">Processing…</span>
+            <span className="ml-auto text-xs animate-pulse" style={{ color: 'var(--muted-text)' }}>Processing…</span>
           )}
         </header>
 
@@ -146,8 +152,8 @@ export default function App() {
         />
       </main>
 
-      {/* Citations panel */}
-      <CitationsPanel citations={citations} />
+      {/* Citations panel - only visible in STATE B */}
+      {showPanel && <CitationsPanel citations={citations} />}
     </div>
   )
 }

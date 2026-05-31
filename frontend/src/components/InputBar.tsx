@@ -21,14 +21,17 @@ export function InputBar({ value, onChange, onSend, onFileSelect, disabled }: Pr
   return (
     <div
       className="border-t px-4 py-3"
-      style={{ background: 'var(--surface-2)', borderColor: '#E5E3DE' }}
+      style={{ background: 'var(--page-bg)', borderColor: 'var(--border-1)' }}
     >
-      <div className="flex items-end gap-2 rounded-xl border bg-white px-3 py-2" style={{ borderColor: '#E5E3DE' }}>
+      <div className="flex items-end gap-2 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--border-1)', background: 'var(--surface-white)' }}>
         {/* Attach button */}
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="mb-0.5 shrink-0 text-gray-400 transition-colors hover:text-gray-600"
+          className="mb-0.5 shrink-0 transition-colors"
+          style={{ color: 'var(--muted-text)' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--assistant-text)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted-text)'}
           title="Upload PDF"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -54,7 +57,8 @@ export function InputBar({ value, onChange, onSend, onFileSelect, disabled }: Pr
         {/* Text input */}
         <textarea
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-gray-400"
+          className="flex-1 resize-none bg-transparent text-sm leading-relaxed outline-none"
+          style={{ color: 'var(--assistant-text)' }}
           placeholder="Ask about the paper… (Enter to send, Shift+Enter for newline)"
           value={value}
           onChange={(e) => onChange(e.target.value)}

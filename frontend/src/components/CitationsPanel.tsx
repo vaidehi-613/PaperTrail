@@ -12,33 +12,22 @@ type CitationsPanelProps = {
 export function CitationsPanel({ citations }: CitationsPanelProps) {
   console.log('🎨 CitationsPanel rendering with', citations.length, 'citations')
 
-  if (citations.length === 0) {
-    return (
-      <aside
-        className="flex w-80 flex-col border-l"
-        style={{ borderColor: '#E5E3DE', background: 'var(--surface-0)' }}
-      >
-        <header className="border-b px-4 py-3" style={{ borderColor: '#E5E3DE' }}>
-          <h2 className="text-sm font-semibold" style={{ color: '#3E3C38' }}>
-            Related Work
-          </h2>
-        </header>
-        <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-gray-400">
-          Ask "What came after this paper?" to discover citing papers.
-        </div>
-      </aside>
-    )
-  }
+  // Count verification statuses
+  const verified = citations.filter(c => c.verification?.status === 'verified').length
+  const notFound = citations.filter(c => c.verification?.status === 'not_found').length
 
   return (
     <aside
-      className="flex w-80 flex-col border-l overflow-hidden"
-      style={{ borderColor: '#E5E3DE', background: 'var(--surface-0)' }}
+      className="flex w-80 flex-col border-l overflow-hidden panel-enter-active"
+      style={{ borderColor: 'var(--border-1)', background: 'var(--sidebar-bg)' }}
     >
-      <header className="border-b px-4 py-3" style={{ borderColor: '#E5E3DE', background: '#FEF3C7' }}>
-        <h2 className="text-sm font-semibold" style={{ color: '#92400E' }}>
-          ✨ NEW UI ✨ Related Work ({citations.length})
+      <header className="border-b px-4 py-3" style={{ borderColor: 'var(--border-1)' }}>
+        <h2 className="text-sm font-semibold" style={{ color: 'var(--assistant-text)' }}>
+          Related Work
         </h2>
+        <p className="text-xs mt-1" style={{ color: 'var(--muted-text)' }}>
+          {citations.length} papers found · {verified} verified{notFound > 0 && `, ${notFound} not found`}
+        </p>
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -61,10 +50,11 @@ function CitationCard({ paper, verification }: CitationWithVerification) {
 
   const CardContent = (
     <div
-      className="relative flex items-start gap-3 rounded-xl border p-3.5 transition-shadow hover:shadow-md"
+      className="relative flex items-start gap-3 border p-3.5 transition-shadow hover:shadow-md"
       style={{
-        borderColor: '#E5E3DE',
-        background: '#FFFFFF',
+        borderColor: 'var(--border-1)',
+        background: 'var(--surface-white)',
+        borderRadius: '12px',
         cursor: url ? 'pointer' : 'default'
       }}
     >
@@ -73,13 +63,13 @@ function CitationCard({ paper, verification }: CitationWithVerification) {
         {/* Title - bold, 2 lines max */}
         <h3
           className="font-semibold leading-snug line-clamp-2 mb-1.5"
-          style={{ color: '#1a1a1a', fontSize: '14px' }}
+          style={{ color: 'var(--assistant-text)', fontSize: '14px' }}
         >
           {paper.title}
         </h3>
 
         {/* Authors · Year - muted grey */}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs" style={{ color: 'var(--muted-text)' }}>
           {authorsText}
           {paper.year && ` · ${paper.year}`}
         </p>
@@ -128,25 +118,25 @@ function getCircularBadge(status: VerificationResult['status']) {
     case 'verified':
       return {
         icon: '✓',
-        bg: '#10B981', // Green
+        bg: 'var(--verified)',
         title: 'Verified: DOI/identifier resolves in OpenAlex/Crossref'
       }
     case 'flagged':
       return {
         icon: '⚠',
-        bg: '#F59E0B', // Amber
+        bg: '#F59E0B', // Amber (not in brand colors)
         title: 'Flagged: Paper exists but claim may be contradicted'
       }
     case 'not_found':
       return {
         icon: '✗',
-        bg: '#EF4444', // Red
+        bg: 'var(--not-found)',
         title: 'Not found: Paper does not resolve in OpenAlex'
       }
     case 'retracted':
       return {
         icon: '⚠',
-        bg: '#EF4444', // Red
+        bg: 'var(--not-found)',
         title: 'Retracted: Paper has been retracted'
       }
   }

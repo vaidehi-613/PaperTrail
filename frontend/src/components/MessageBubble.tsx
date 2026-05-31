@@ -20,17 +20,17 @@ function SourceChip({ source }: { source: Source }) {
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs"
-      style={{ background: '#F3F4F6', color: '#6B7280' }}
+      style={{ background: 'var(--chip-bg)', color: 'var(--chip-text)' }}
       title={source.content}
     >
       {/* Prefix badges for figures/tables */}
       {source.is_table && (
-        <span className="rounded bg-blue-100 px-1.5 py-0.5 text-blue-700 font-medium text-xs">
+        <span className="rounded px-1.5 py-0.5 font-medium text-xs" style={{ background: 'var(--accent-tint-bg)', color: 'var(--accent-tint-text)' }}>
           table
         </span>
       )}
       {source.is_figure && (
-        <span className="rounded bg-purple-100 px-1.5 py-0.5 text-purple-700 font-medium text-xs">
+        <span className="rounded px-1.5 py-0.5 font-medium text-xs" style={{ background: 'var(--accent-tint-bg)', color: 'var(--accent-tint-text)' }}>
           fig
         </span>
       )}
@@ -53,7 +53,7 @@ export function MessageBubble({ message }: Props) {
           style={
             isUser
               ? { background: 'var(--accent)', color: 'white' }
-              : { background: 'var(--surface-2)', color: '#1a1a1a' }
+              : { background: 'var(--assistant-bubble)', color: 'var(--assistant-text)' }
           }
         >
           {message.content}

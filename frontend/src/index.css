@@ -1,13 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #6557D6;
-  --surface-1: #FFFFFF;
-  --surface-2: #EFEEEA;
+  /* Brand Colors */
+  --accent: #6557D6;              /* Purple accent / user bubble */
+  --accent-tint-bg: #EEEDFB;     /* Light purple backgrounds */
+  --accent-tint-text: #4A3FAE;   /* Purple text */
+
+  /* Surfaces */
+  --page-bg: #EFEEEA;
+  --sidebar-bg: #F7F6F2;
+  --surface-white: #FFFFFF;
+
+  /* Message Bubbles */
+  --assistant-bubble: #F0EEEA;
+  --assistant-text: #272724;
+
+  /* Citation Chips */
+  --chip-bg: #F0EEEA;
+  --chip-text: #6B6A63;
+
+  /* Text & Borders */
+  --muted-text: #8A8980;
+  --border-1: #E4E3DD;
+  --border-2: #EAE9E3;
+  --border-3: #E8E7E1;
+
+  /* Badges */
+  --verified: #15A66B;
+  --not-found: #E24B4A;
 }
 
 body {
   margin: 0;
-  background-color: var(--surface-1);
+  background-color: var(--page-bg);
   font-family: system-ui, sans-serif;
+}
+
+/* Layout transitions */
+.chat-full {
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.chat-narrow {
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+/* Panel animations */
+.panel-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.panel-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
