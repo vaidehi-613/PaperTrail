@@ -25,8 +25,9 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
         <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--assistant-text)' }}>
           Related Work
         </h2>
-        <p className="text-xs leading-tight" style={{ color: 'var(--muted-text)' }}>
-          {citations.length} papers found · {verified} verified{notFound > 0 && `, ${notFound} not found`}
+        <p className="text-xs leading-tight flex items-center gap-1" style={{ color: 'var(--muted-text)' }}>
+          <span>☐</span>
+          <span>{citations.length} papers found · {verified} verified{notFound > 0 && `, ${notFound} not found`}</span>
         </p>
       </header>
 
@@ -40,7 +41,7 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
 }
 
 function CitationCard({ paper, verification }: CitationWithVerification) {
-  const badge = verification ? getCircularBadge(verification.status) : null
+  const badge = verification ? getSquareBadge(verification.status) : null
   const url = paper.url || (paper.doi ? `https://doi.org/${paper.doi}` : null)
 
   // Format authors: "First Author, Second Author et al."
@@ -76,19 +77,20 @@ function CitationCard({ paper, verification }: CitationWithVerification) {
         </p>
       </div>
 
-      {/* Right: Circular badge - vertically centered */}
+      {/* Right: Square badge - vertically centered */}
       {badge && (
-        <div className="flex items-center shrink-0" style={{ height: '100%' }}>
+        <div className="flex items-center shrink-0">
           <div
-            className="flex items-center justify-center rounded-full"
+            className="flex items-center justify-center"
             style={{
-              width: '20px',
-              height: '20px',
+              width: '22px',
+              height: '22px',
+              borderRadius: '4px',
               background: badge.bg,
             }}
             title={badge.title}
           >
-            <span className="text-white font-bold" style={{ fontSize: '11px' }}>
+            <span className="text-white font-bold" style={{ fontSize: '14px', lineHeight: '1' }}>
               {badge.icon}
             </span>
           </div>
@@ -114,29 +116,29 @@ function CitationCard({ paper, verification }: CitationWithVerification) {
   return CardContent
 }
 
-function getCircularBadge(status: VerificationResult['status']) {
+function getSquareBadge(status: VerificationResult['status']) {
   switch (status) {
     case 'verified':
       return {
-        icon: '✓',
+        icon: '☑',
         bg: 'var(--verified)',
         title: 'Verified: DOI/identifier resolves in OpenAlex/Crossref'
       }
     case 'flagged':
       return {
         icon: '⚠',
-        bg: '#F59E0B', // Amber (not in brand colors)
+        bg: '#F59E0B', // Amber
         title: 'Flagged: Paper exists but claim may be contradicted'
       }
     case 'not_found':
       return {
-        icon: '✗',
+        icon: '☒',
         bg: 'var(--not-found)',
         title: 'Not found: Paper does not resolve in OpenAlex'
       }
     case 'retracted':
       return {
-        icon: '⚠',
+        icon: '☒',
         bg: 'var(--not-found)',
         title: 'Retracted: Paper has been retracted'
       }

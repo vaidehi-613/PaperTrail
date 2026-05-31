@@ -62,11 +62,7 @@ export function MessageBubble({ message }: Props) {
           style={
             isUser
               ? { background: 'var(--accent)', color: 'white' }
-              : {
-                  background: 'var(--assistant-bubble)',
-                  color: 'var(--assistant-text)',
-                  border: '1px solid var(--assistant-border)'
-                }
+              : { background: 'var(--assistant-bubble)', color: 'var(--assistant-text)' }
           }
         >
           {message.content}
