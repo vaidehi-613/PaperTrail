@@ -2,17 +2,19 @@
 
 :root {
   /* Brand Colors */
-  --accent: #6557D6;              /* Purple accent / user bubble */
-  --accent-tint-bg: #EEEDFB;     /* Light purple backgrounds */
-  --accent-tint-text: #4A3FAE;   /* Purple text */
+  --accent: #6557D6;              /* Purple accent / user bubble / send button */
+  --accent-tint-bg: #EEEDFB;     /* Light purple backgrounds / active sidebar */
+  --accent-tint-text: #4A3FAE;   /* Purple text for fig/table tags */
+  --active-sidebar-text: #3C3489; /* Active sidebar item text */
 
   /* Surfaces */
   --page-bg: #EFEEEA;
   --sidebar-bg: #F7F6F2;
   --surface-white: #FFFFFF;
+  --card-bg: #E8E7E1;            /* Related Work card background */
 
   /* Message Bubbles */
-  --assistant-bubble: #FFFFFF;
+  --assistant-bubble: #F0EEEA;   /* Warm grey assistant bubble */
   --assistant-text: #272724;
 
   /* Citation Chips */
@@ -21,6 +23,7 @@
 
   /* Text & Borders */
   --muted-text: #8A8980;
+  --muted-text-dark: #55554F;
   --border-1: #E4E3DD;
   --border-2: #EAE9E3;
   --border-3: #E8E7E1;

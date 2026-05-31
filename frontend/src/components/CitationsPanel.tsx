@@ -18,19 +18,19 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
 
   return (
     <aside
-      className="flex w-80 flex-col border-l overflow-hidden panel-enter-active"
-      style={{ borderColor: 'var(--border-1)', background: 'var(--sidebar-bg)' }}
+      className="flex flex-col border-l overflow-hidden panel-enter-active"
+      style={{ width: '244px', borderColor: 'var(--border-1)', background: 'var(--surface-white)' }}
     >
-      <header className="border-b px-4 py-3" style={{ borderColor: 'var(--border-1)' }}>
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--assistant-text)' }}>
+      <header className="border-b px-3 py-2.5" style={{ borderColor: 'var(--border-1)' }}>
+        <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--assistant-text)' }}>
           Related Work
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'var(--muted-text)' }}>
+        <p className="text-xs leading-tight" style={{ color: 'var(--muted-text)' }}>
           {citations.length} papers found · {verified} verified{notFound > 0 && `, ${notFound} not found`}
         </p>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         {citations.map((item, idx) => (
           <CitationCard key={idx} {...item} />
         ))}
@@ -50,26 +50,27 @@ function CitationCard({ paper, verification }: CitationWithVerification) {
 
   const CardContent = (
     <div
-      className="relative flex items-start gap-3 border p-3.5 transition-shadow hover:shadow-md"
+      className="relative flex items-start gap-2.5 border transition-shadow hover:shadow-md"
       style={{
         borderColor: 'var(--border-1)',
-        background: 'var(--surface-white)',
+        background: 'var(--card-bg)',
         borderRadius: '12px',
+        padding: '10px 12px',
         cursor: url ? 'pointer' : 'default'
       }}
     >
       {/* Left: Paper info */}
       <div className="flex-1 min-w-0">
-        {/* Title - bold, 2 lines max */}
+        {/* Title - bold, 2 lines max, right padding for badge */}
         <h3
-          className="font-semibold leading-snug line-clamp-2 mb-1.5"
-          style={{ color: 'var(--assistant-text)', fontSize: '14px' }}
+          className="font-semibold leading-snug line-clamp-2 mb-1"
+          style={{ color: 'var(--assistant-text)', fontSize: '13px', paddingRight: badge ? '24px' : '0' }}
         >
           {paper.title}
         </h3>
 
         {/* Authors · Year - muted grey */}
-        <p className="text-xs" style={{ color: 'var(--muted-text)' }}>
+        <p className="text-xs" style={{ color: 'var(--muted-text-dark)' }}>
           {authorsText}
           {paper.year && ` · ${paper.year}`}
         </p>

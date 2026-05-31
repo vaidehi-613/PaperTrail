@@ -75,7 +75,7 @@ export function Sidebar({ chats, activeChatId, onNew, onSelect }: Props) {
                           borderLeft: '3px solid var(--accent)',
                           paddingLeft: '5px',
                           background: 'var(--accent-tint-bg)',
-                          color: 'var(--accent-tint-text)',
+                          color: 'var(--active-sidebar-text)',
                         }
                       : { background: 'transparent' }
                   }
