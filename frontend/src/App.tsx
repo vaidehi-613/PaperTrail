@@ -107,7 +107,15 @@ export default function App() {
   // STATE B: Show panel if the latest assistant message has scholar_results
   const showPanel = useMemo(() => {
     const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant')
-    return (lastAssistant?.scholar_results?.length ?? 0) > 0
+    const hasResults = (lastAssistant?.scholar_results?.length ?? 0) > 0
+    console.log('🔍 Panel visibility check:', {
+      messageCount: messages.length,
+      lastAssistantId: lastAssistant?.id,
+      scholarCount: lastAssistant?.scholar_results?.length,
+      showPanel: hasResults,
+      scholarResults: lastAssistant?.scholar_results
+    })
+    return hasResults
   }, [messages])
 
   return (

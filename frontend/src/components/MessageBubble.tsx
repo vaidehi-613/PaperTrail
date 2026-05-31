@@ -44,6 +44,15 @@ type Props = { message: Message }
 export function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user'
 
+  console.log('💬 MessageBubble rendering:', {
+    role: message.role,
+    contentLength: message.content?.length,
+    hasSources: !!message.sources,
+    sourceCount: message.sources?.length,
+    hasScholarResults: !!message.scholar_results,
+    scholarCount: message.scholar_results?.length
+  })
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`flex max-w-[70%] flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
