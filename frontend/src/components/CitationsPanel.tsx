@@ -10,6 +10,8 @@ type CitationsPanelProps = {
 }
 
 export function CitationsPanel({ citations }: CitationsPanelProps) {
+  console.log('🎨 CitationsPanel rendering with', citations.length, 'citations')
+
   if (citations.length === 0) {
     return (
       <aside
@@ -33,9 +35,9 @@ export function CitationsPanel({ citations }: CitationsPanelProps) {
       className="flex w-80 flex-col border-l overflow-hidden"
       style={{ borderColor: '#E5E3DE', background: 'var(--surface-0)' }}
     >
-      <header className="border-b px-4 py-3" style={{ borderColor: '#E5E3DE' }}>
-        <h2 className="text-sm font-semibold" style={{ color: '#3E3C38' }}>
-          Related Work ({citations.length})
+      <header className="border-b px-4 py-3" style={{ borderColor: '#E5E3DE', background: '#FEF3C7' }}>
+        <h2 className="text-sm font-semibold" style={{ color: '#92400E' }}>
+          ✨ NEW UI ✨ Related Work ({citations.length})
         </h2>
       </header>
 

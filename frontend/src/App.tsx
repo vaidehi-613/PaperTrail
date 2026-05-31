@@ -122,7 +122,7 @@ export default function App() {
         {/* Header */}
         <header
           className="flex items-center gap-3 border-b px-6 py-3"
-          style={{ borderColor: '#E5E3DE' }}
+          style={{ borderColor: '#E5E3DE', background: '#FEF3C7' }}
         >
           <PaperChip filename={activePaperName} />
           {!activePaperName && (
