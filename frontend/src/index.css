@@ -14,8 +14,9 @@
   --card-bg: #E8E7E1;            /* Related Work card background */
 
   /* Message Bubbles */
-  --assistant-bubble: #F0EEEA;   /* Warm grey assistant bubble */
+  --assistant-bubble: #FFFFFF;   /* White assistant bubble (visible against page bg) */
   --assistant-text: #272724;
+  --assistant-border: #E4E3DD;   /* Border for visibility */
 
   /* Citation Chips */
   --chip-bg: #F0EEEA;
