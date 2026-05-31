@@ -77,14 +77,19 @@ class AgentState(TypedDict):
 def _router_node(state: AgentState) -> dict:
     settings = get_settings()
 
+    # Extract raw question from wrapped content (strips <data> tags)
+    last_message_content = state["messages"][-1].content
+    # Remove XML tags to get raw question text
+    import re
+    raw_question = re.sub(r'<data[^>]*>|</data>', '', last_message_content).strip().lower()
+
     # Check if question is about forward citations
-    last_message = state["messages"][-1].content.lower()
-    requires_tool = any(phrase in last_message for phrase in [
+    requires_tool = any(phrase in raw_question for phrase in [
         "came after", "built on", "cite this", "citing papers",
-        "newer papers", "what papers", "related work"
+        "newer papers", "what papers", "related work", "what should i read"
     ])
 
-    logger.info(f"[router] Question: {last_message[:100]}, requires_tool={requires_tool}")
+    logger.info(f"[router] Raw question: {raw_question[:100]}, requires_tool={requires_tool}")
 
     # Force tool use for forward citation questions
     if requires_tool:
