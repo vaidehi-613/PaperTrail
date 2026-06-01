@@ -21,7 +21,11 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
     Use for questions about the paper's content, methods, results, or figures."""
     sources: list[Source] = await _retrieve(query, paper_id)
 
-    chunks = []
+    # Prepare chunks for LLM (with citation hints in content)
+    chunks_for_llm = []
+    # Prepare clean chunks for frontend (no citation hints)
+    chunks_clean = []
+
     for s in sources:
         # Build citation hint for the LLM
         citation_hint = ""
@@ -32,21 +36,33 @@ async def retrieve_paper(query: str, paper_id: str) -> str:
         else:
             citation_hint = f"[From {s.section or 'unknown section'}, p.{s.page}]"
 
-        chunks.append({
+        chunks_for_llm.append({
+            "content": f"{citation_hint}\n{s.content}",
+            "section": s.section,
+            "page": s.page,
+            "is_table": s.is_table,
+            "is_figure": s.is_figure,
+        })
+
+        chunks_clean.append({
+            "id": s.id,
             "content": s.content,
             "section": s.section,
             "page": s.page,
             "is_table": s.is_table,
             "is_figure": s.is_figure,
-            "citation_hint": citation_hint,
+            "similarity": s.similarity,
         })
 
-    result = json.dumps(chunks)
     instruction = (
         "Retrieved chunks from the paper. IMPORTANT: When answering, you MUST include inline citations "
         "using the format [Section Name, p.X] or [Table N, p.X] or [Figure N, p.X]. "
-        "Use the 'citation_hint' field as guidance. NEVER answer without citing the source."
+        "Each chunk starts with a citation hint. NEVER answer without citing the source.\n\n"
+        f"Chunks for LLM context:\n{json.dumps(chunks_for_llm)}"
     )
+
+    # Return clean chunks (parseable by frontend)
+    result = json.dumps(chunks_clean)
     return wrap_data(f"{instruction}\n\n{result}", "tool_result")
 
 

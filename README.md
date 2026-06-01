@@ -235,9 +235,7 @@ papertrail/
 │   ├── test_verifier_eval.py  # Precision/recall metrics
 │   └── ...             # Unit tests for ingestion, agent, retrieval
 ├── PLAN.md             # Build plan (phases 0-8)
-├── CLAUDE.md           # Working conventions
-└── README.md           # This file
-```
+
 
 ---
 

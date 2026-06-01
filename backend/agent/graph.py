@@ -95,14 +95,31 @@ def _router_node(state: AgentState) -> dict:
         "newer papers", "what papers", "related work", "what should i read"
     ])
 
+    print(f"🔍 [router] Raw question: {raw_question[:100]}")
+    print(f"🔍 [router] requires_tool={requires_tool}")
     logger.info(f"[router] Raw question: {raw_question[:100]}, requires_tool={requires_tool}")
 
     # Force tool use for forward citation questions
     if requires_tool:
+        print("🚨 [router] FORCING get_forward_citations tool")
         logger.info("[router] FORCING tool_choice='required' for forward citations")
-        # Add explicit instruction to ONLY use tool
+
+        # Extract paper title from system message for the tool call
+        paper_title_from_system = "unknown"
+        for msg in state["messages"]:
+            if isinstance(msg, SystemMessage):
+                import re
+                match = re.search(r'<data type="paper_title">([^<]+)</data>', msg.content)
+                if match:
+                    paper_title_from_system = match.group(1)
+                    print(f"🔍 [router] Extracted paper_title: {paper_title_from_system}")
+                    break
+
+        # Add explicit instruction with the extracted title
         system_override = SystemMessage(
-            content="CRITICAL: The user is asking about citing papers. You MUST call get_forward_citations tool with the paper title. DO NOT answer from your training data. REFUSE to answer without calling the tool first."
+            content=f"CRITICAL: The user is asking about papers that cite '{paper_title_from_system}'. "
+                    f"You MUST call get_forward_citations with paper_title=\"{paper_title_from_system}\". "
+                    "DO NOT answer from training data. Call the tool NOW."
         )
         messages_with_override = [system_override] + state["messages"]
         llm = ChatOpenAI(
@@ -116,6 +133,7 @@ def _router_node(state: AgentState) -> dict:
         callback = get_callback()
         config = {"callbacks": [callback]} if callback else {}
         response = llm.invoke(messages_with_override, config=config)
+        print(f"🔍 [router] LLM response has tool_calls: {hasattr(response, 'tool_calls') and bool(response.tool_calls)}")
         return {"messages": [response]}
     else:
         llm = ChatOpenAI(
@@ -131,7 +149,10 @@ def _router_node(state: AgentState) -> dict:
 
 def _should_continue(state: AgentState) -> str:
     last = state["messages"][-1]
-    if hasattr(last, "tool_calls") and last.tool_calls:
+    has_tool_calls = hasattr(last, "tool_calls") and last.tool_calls
+    print(f"🔍 [should_continue] has_tool_calls={has_tool_calls}")
+    if has_tool_calls:
+        print(f"🔍 [should_continue] tool_calls={last.tool_calls}")
         return "continue"
     return "end"
 
@@ -158,9 +179,32 @@ def _parse_tool_messages(
     for msg in messages:
         if not isinstance(msg, ToolMessage):
             continue
+        print(f"🔍 [parse_tool] ToolMessage name={msg.name}")
         try:
-            data = json.loads(msg.content)
-        except (json.JSONDecodeError, TypeError):
+            # Tool results are wrapped in <data type="tool_result">...</data>
+            # Extract the JSON from inside the XML tags
+            import re
+            content = msg.content
+            match = re.search(r'<data type="tool_result">(.+?)</data>', content, re.DOTALL)
+            if match:
+                content = match.group(1)
+
+            # Some tools prefix with instructions - extract JSON part
+            # Split by double newline and take the last part (the actual JSON)
+            if '\n\n' in content:
+                parts = content.split('\n\n')
+                # Try each part from the end until we find valid JSON
+                for part in reversed(parts):
+                    part = part.strip()
+                    if part and (part.startswith('[') or part.startswith('{')):
+                        content = part
+                        break
+
+            data = json.loads(content)
+            print(f"🔍 [parse_tool] Parsed JSON keys: {list(data.keys()) if isinstance(data, dict) else f'list len={len(data)}'}")
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"🔍 [parse_tool] JSON parsing failed for {msg.name}: {e}")
+            print(f"🔍 [parse_tool] Content preview: {content[:200]}")
             continue
 
         if msg.name == "retrieve_paper":

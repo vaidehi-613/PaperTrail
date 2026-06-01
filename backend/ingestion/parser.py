@@ -45,17 +45,23 @@ def _page(item) -> int | None:
 def parse_pdf(pdf_path: Path) -> tuple[str, list[Chunk]]:
     """Parse PDF and return (paper_title, chunks).
 
-    Returns the document title from DocLing metadata and the list of chunks.
+    Returns the document title from first text or the list of chunks.
     """
     result = _converter.convert(str(pdf_path))
     doc = result.document
 
-    # Extract paper title from document metadata
-    paper_title = "Unknown Paper"
-    if hasattr(doc, 'name') and doc.name:
-        paper_title = doc.name.strip()
-    elif hasattr(doc, 'title') and doc.title:
-        paper_title = doc.title.strip()
+    # Extract paper title: use first substantial text (usually the title)
+    paper_title = pdf_path.stem  # Fallback to filename without extension
+    first_text_found = False
+
+    for item, _level in doc.iterate_items():
+        if isinstance(item, TextItem) and not first_text_found:
+            text = item.text.strip()
+            # First non-header text that's not too short (likely the title)
+            if len(text) > 10 and not text.isupper():
+                paper_title = text
+                first_text_found = True
+                break
 
     chunks: list[Chunk] = []
     current_section: str | None = None
