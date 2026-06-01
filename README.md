@@ -19,9 +19,9 @@ PaperTrail is the first "chat with PDF" tool that **enforces inline citations** 
 
 ### 📹 Video Demo
 
-https://github.com/vaidehi-613/PaperTrail/assets/your-user-id/demo.mov
+https://github.com/vaidehi-613/PaperTrail/raw/main/assets/demo.mov
 
-> Upload the video to GitHub: Create a new issue in your repo, drag `assets/demo.mov` into the comment box, let it upload, then copy the URL and replace the line above.
+*Click to download and watch the full demo (57MB)*
 
 ### 📸 Screenshots
 
