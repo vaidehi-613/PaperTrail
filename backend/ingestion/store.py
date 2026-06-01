@@ -10,10 +10,17 @@ async def store_paper(
 ) -> str:
     sb = await get_supabase()
 
-    paper_resp = await sb.table("papers").insert({
-        "filename": filename,
-        "title": paper_title,
-    }).execute()
+    # Try to insert with title, fall back to filename-only if column doesn't exist
+    try:
+        paper_resp = await sb.table("papers").insert({
+            "filename": filename,
+            "title": paper_title,
+        }).execute()
+    except Exception:
+        # Fallback: title column doesn't exist yet
+        paper_resp = await sb.table("papers").insert({
+            "filename": filename,
+        }).execute()
     paper_id: str = paper_resp.data[0]["id"]
 
     rows = [
