@@ -24,11 +24,20 @@ async def upload_paper(file: UploadFile) -> dict[str, object]:
 
     try:
         loop = asyncio.get_event_loop()
-        chunks = await loop.run_in_executor(None, parse_pdf, tmp_path)
+        paper_title, chunks = await loop.run_in_executor(None, parse_pdf, tmp_path)
 
         embeddings = await embed_chunks(chunks)
-        paper_id = await store_paper(file.filename or "unknown.pdf", chunks, embeddings)
+        paper_id = await store_paper(
+            file.filename or "unknown.pdf",
+            paper_title,
+            chunks,
+            embeddings
+        )
     finally:
         tmp_path.unlink(missing_ok=True)
 
-    return {"paper_id": paper_id, "chunk_count": len(chunks)}
+    return {
+        "paper_id": paper_id,
+        "paper_title": paper_title,
+        "chunk_count": len(chunks)
+    }

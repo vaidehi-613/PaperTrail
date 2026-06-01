@@ -42,9 +42,20 @@ def _page(item) -> int | None:
     return item.prov[0].page_no if item.prov else None
 
 
-def parse_pdf(pdf_path: Path) -> list[Chunk]:
+def parse_pdf(pdf_path: Path) -> tuple[str, list[Chunk]]:
+    """Parse PDF and return (paper_title, chunks).
+
+    Returns the document title from DocLing metadata and the list of chunks.
+    """
     result = _converter.convert(str(pdf_path))
     doc = result.document
+
+    # Extract paper title from document metadata
+    paper_title = "Unknown Paper"
+    if hasattr(doc, 'name') and doc.name:
+        paper_title = doc.name.strip()
+    elif hasattr(doc, 'title') and doc.title:
+        paper_title = doc.title.strip()
 
     chunks: list[Chunk] = []
     current_section: str | None = None
@@ -103,4 +114,4 @@ def parse_pdf(pdf_path: Path) -> list[Chunk]:
             )
             chunk_index += 1
 
-    return chunks
+    return paper_title, chunks

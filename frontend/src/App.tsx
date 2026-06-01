@@ -76,11 +76,11 @@ export default function App() {
   async function handleFileSelect(file: File) {
     setIsLoading(true)
     try {
-      const { paper_id, chunk_count } = await uploadPaper(file)
+      const { paper_id, paper_title, chunk_count } = await uploadPaper(file)
       setActivePaperId(paper_id)
-      setActivePaperName(file.name)
+      setActivePaperName(paper_title)  // Use extracted title, not filename
       setMessages([])
-      console.info(`Uploaded ${file.name}: ${chunk_count} chunks (paper_id=${paper_id})`)
+      console.info(`Uploaded "${paper_title}": ${chunk_count} chunks (paper_id=${paper_id})`)
     } catch (err) {
       alert('Failed to upload PDF. Make sure the backend is running.')
     } finally {

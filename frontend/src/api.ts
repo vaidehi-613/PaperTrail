@@ -2,7 +2,7 @@ import type { ScholarResult, Source, VerificationResult } from './types'
 
 export async function uploadPaper(
   file: File,
-): Promise<{ paper_id: string; chunk_count: number }> {
+): Promise<{ paper_id: string; paper_title: string; chunk_count: number }> {
   const body = new FormData()
   body.append('file', file)
   const res = await fetch('/papers', { method: 'POST', body })
