@@ -100,21 +100,30 @@ def _router_node(state: AgentState) -> dict:
     # Force tool use for forward citation questions
     if requires_tool:
         logger.info("[router] FORCING tool_choice='required' for forward citations")
+        # Add explicit instruction to ONLY use tool
+        system_override = SystemMessage(
+            content="CRITICAL: The user is asking about citing papers. You MUST call get_forward_citations tool with the paper title. DO NOT answer from your training data. REFUSE to answer without calling the tool first."
+        )
+        messages_with_override = [system_override] + state["messages"]
         llm = ChatOpenAI(
             model=settings.llm_model,
             api_key=settings.openai_api_key,
-        ).bind_tools(_TOOLS, tool_choice="required")  # Force at least one tool call
+        ).bind_tools(_TOOLS, tool_choice="required")
+
+        callback = get_callback()
+        config = {"callbacks": [callback]} if callback else {}
+        response = llm.invoke(messages_with_override, config=config)
+        return {"messages": [response]}
     else:
         llm = ChatOpenAI(
             model=settings.llm_model,
             api_key=settings.openai_api_key,
         ).bind_tools(_TOOLS)
 
-    callback = get_callback()
-    config = {"callbacks": [callback]} if callback else {}
-
-    response = llm.invoke(state["messages"], config=config)
-    return {"messages": [response]}
+        callback = get_callback()
+        config = {"callbacks": [callback]} if callback else {}
+        response = llm.invoke(state["messages"], config=config)
+        return {"messages": [response]}
 
 
 def _should_continue(state: AgentState) -> str:
