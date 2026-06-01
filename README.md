@@ -287,4 +287,4 @@ Built with:
 
 ---
 
-**Built by [Your Name]** | [GitHub](https://github.com/yourusername) | [LinkedIn](https://linkedin.com/in/yourprofile)
+**Built by Vaidehi Pawar** | pawar.vaidehi613@gmail.com
