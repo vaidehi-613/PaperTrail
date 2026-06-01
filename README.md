@@ -33,19 +33,22 @@ PaperTrail is the first "chat with PDF" tool that **enforces inline citations** 
 ## Features
 
 ### Understanding & Trust (Core Experience)
-- **📄 PDF Ingestion with Metadata**: DocLing parser extracts text, tables, and figures with section/page labels
+- **📄 PDF Ingestion with Title Extraction**: DocLing parser extracts paper title, text, tables, and figures with section/page metadata
 - **🔍 Hybrid Search + Reranking**: Vector ANN + BM25 keyword search → RRF fusion → cross-encoder reranking
 - **📌 Inline Citation Enforcement**: Every answer includes `[Section, p.X]` / `[Table N, p.X]` / `[Figure N, p.X]`
+- **🎨 Two-State UI**: 
+  - **Content questions** → Citation chips below answer bubbles
+  - **Scholar questions** → Related Work panel with verified citing papers
 - **🔐 Grounding Guardrails**: Answers ONLY from retrieved content; no parametric knowledge; "not covered" handling
 
-### Verification & Related Work (Secondary Features)
-- **🤖 Agentic Orchestration**: LangGraph tool-calling loop (retrieve_paper, get_forward_citations, scholar_search)
-- **✅ Three-Part Citation Verifier**:
-  1. **Existence check**: Does the paper resolve in OpenAlex/Crossref?
-  2. **Retraction check**: Is it flagged in the Crossref retraction database?
-  3. **Claim support**: Does the abstract support the claim? (LLM-as-judge NLI)
-- **🔗 Relevance-Based Forward Citations**: Papers that cite this one, ranked by semantic similarity + citation count (not just popularity)
-- **📊 Provenance Badges**: ✓ verified (green), ⚠ flagged (amber), ✗ not found (red)
+### Verification & Related Work (Working End-to-End)
+- **🤖 Agentic Orchestration**: LangGraph tool-calling loop with forced tool execution for scholar queries
+- **✅ Citation Verifier**:
+  1. **Existence check**: Resolves paper in OpenAlex/Crossref
+  2. **Retraction check**: Flags papers in Crossref retraction database (future)
+  3. **Claim support**: Abstract NLI check (LLM-as-judge)
+- **🔗 Relevance-Based Forward Citations**: Papers citing this one, ranked by semantic similarity + influence score
+- **📊 Provenance Badges**: ☑ verified (green), ☒ not found (red) — square badges in Related Work cards
 - **🔐 Prompt Injection Defense**: XML `<data>` tags separate instructions from untrusted PDF content
 - **📈 Observability**: Langfuse tracing across LLM calls, embeddings, and tool use
 
@@ -128,7 +131,7 @@ See `tests/test_verifier_eval.py` and `tests/data/verifier_eval.json` for the fu
 | Backend        | Python 3.12, FastAPI, LangGraph + LangChain |
 | Vector Store   | Supabase Postgres + pgvector (hybrid: vector + tsvector BM25) |
 | Ingestion      | DocLing (parses tables + figures, not just text) |
-| LLM/Embeddings | OpenAI (`gpt-4o-mini`, `text-embedding-3-small`) |
+| LLM/Embeddings | OpenAI (`gpt-4o`, `text-embedding-3-small`) |
 | Scholarly APIs | OpenAlex, Crossref, Semantic Scholar |
 | Frontend       | React (Vite) + TypeScript + Tailwind |
 | Observability  | Langfuse |
@@ -191,14 +194,16 @@ pnpm --dir frontend dev
 
 ## Usage
 
-1. **Upload a PDF** → DocLing parses it, chunks extracted, embeddings stored
-2. **Ask questions**:
-   - "What is the main contribution?" → Retrieves from the paper
-   - "What came after this?" → Scholar search for forward citations
-3. **See provenance badges**:
-   - ✓ **Verified**: Paper exists, claim supported
-   - ⚠ **Flagged**: Paper exists, but claim contradicted by abstract
-   - ✗ **Not found**: Paper doesn't resolve in OpenAlex (fabricated)
+1. **Upload a PDF** → DocLing extracts title and content, chunks stored in vector database
+2. **Ask content questions**:
+   - "How does scaled dot-product attention work?"
+   - **Result**: Grey bubble with inline-cited answer + citation chips below showing sections/pages/tables
+3. **Ask scholar questions**:
+   - "What papers came after this?" or "Show me newer work that cites this"
+   - **Result**: Short conversational answer + Related Work panel on right with verified papers
+4. **Verification badges** (in Related Work panel):
+   - ☑ **Verified** (green): Paper exists in OpenAlex, DOI resolves
+   - ☒ **Not found** (red): Paper doesn't resolve (likely fabricated)
 
 ---
 
