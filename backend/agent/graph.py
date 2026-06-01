@@ -108,7 +108,10 @@ def _router_node(state: AgentState) -> dict:
         llm = ChatOpenAI(
             model=settings.llm_model,
             api_key=settings.openai_api_key,
-        ).bind_tools(_TOOLS, tool_choice="required")
+        ).bind_tools(_TOOLS, tool_choice={
+            "type": "function",
+            "function": {"name": "get_forward_citations"}
+        })
 
         callback = get_callback()
         config = {"callbacks": [callback]} if callback else {}
