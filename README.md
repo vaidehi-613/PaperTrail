@@ -25,15 +25,17 @@ https://github.com/vaidehi-613/PaperTrail/raw/main/assets/demo.mov
 
 ### 📸 Screenshots
 
-#### Two-State Interface
+#### Two-State Interface in Action
+
+![Complete Interface](assets/reference_paper_ss.png)
+
+*Shows both UI states: Content questions with inline citations `[Section, p.X]` and citation chips below answers (top), plus scholar questions with the Related Work panel showing verified citing papers with green ☑ badges (bottom right).*
+
+#### Chat Interface
 
 ![Chat Interface](assets/chat.png)
 
-*Left: Content questions show citation chips. Right: Scholar questions show the Related Work panel with verified papers.*
-
-#### Reference Paper View
-
-![Reference Paper](assets/reference_paper_ss.png)
+*Clean, focused chat interface with paper context in the header.*
 
 ---
 
